@@ -110,23 +110,29 @@ function AllSportsTable({
             <th className="px-3 py-2 text-left font-semibold w-8" rowSpan={2}>#</th>
             <th className="px-3 py-2 text-left font-semibold" rowSpan={2}>Seleção</th>
             <th className="px-3 py-2 text-center font-semibold" rowSpan={2} title="Pontos totais">Pts</th>
-            <th className="px-3 py-2 text-center font-semibold border-l border-sand-300 bg-blue-50 text-blue-700" colSpan={4}>Vôlei de Areia</th>
-            <th className="px-3 py-2 text-center font-semibold border-l border-sand-300 bg-green-50 text-green-700" colSpan={4}>Futevôlei</th>
-            <th className="px-3 py-2 text-center font-semibold border-l border-sand-300 bg-amber-50 text-amber-700" colSpan={3}>Beach Tennis</th>
+            <th className="px-3 py-2 text-center font-semibold border-l border-sand-300 bg-blue-50 text-blue-700" colSpan={6}>Vôlei de Areia</th>
+            <th className="px-3 py-2 text-center font-semibold border-l border-sand-300 bg-green-50 text-green-700" colSpan={6}>Futevôlei</th>
+            <th className="px-3 py-2 text-center font-semibold border-l border-sand-300 bg-amber-50 text-amber-700" colSpan={5}>Beach Tennis</th>
           </tr>
           <tr>
             {/* Vôlei */}
             <th className="px-2 py-1.5 text-center font-medium border-l border-sand-300 bg-blue-50 text-blue-600" title="Pontos Vôlei">Pts</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-blue-50 text-blue-600" title="Vitórias">V</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-blue-50 text-blue-600" title="Derrotas">D</th>
             <th className="px-2 py-1.5 text-center font-medium bg-blue-50 text-blue-600" title="Sets Vencidos">SV</th>
             <th className="px-2 py-1.5 text-center font-medium bg-blue-50 text-blue-600" title="Saldo de Sets">SS</th>
             <th className="px-2 py-1.5 text-center font-medium bg-blue-50 text-blue-600" title="Saldo de Pontos">SP</th>
             {/* Futevôlei */}
             <th className="px-2 py-1.5 text-center font-medium border-l border-sand-300 bg-green-50 text-green-600" title="Pontos Futevôlei">Pts</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-green-50 text-green-600" title="Vitórias">V</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-green-50 text-green-600" title="Derrotas">D</th>
             <th className="px-2 py-1.5 text-center font-medium bg-green-50 text-green-600" title="Sets Vencidos">SV</th>
             <th className="px-2 py-1.5 text-center font-medium bg-green-50 text-green-600" title="Saldo de Sets">SS</th>
             <th className="px-2 py-1.5 text-center font-medium bg-green-50 text-green-600" title="Saldo de Pontos">SP</th>
             {/* Beach Tennis */}
             <th className="px-2 py-1.5 text-center font-medium border-l border-sand-300 bg-amber-50 text-amber-600" title="Pontos Beach Tennis">Pts</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-amber-50 text-amber-600" title="Vitórias">V</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-amber-50 text-amber-600" title="Derrotas">D</th>
             <th className="px-2 py-1.5 text-center font-medium bg-amber-50 text-amber-600" title="Games Pró">GP</th>
             <th className="px-2 py-1.5 text-center font-medium bg-amber-50 text-amber-600" title="Saldo de Pontos (game + TI)">SP</th>
           </tr>
@@ -139,16 +145,22 @@ function AllSportsTable({
               <td className="px-3 py-2.5 text-center font-bold text-primary-700">{r.totalPts}</td>
               {/* Vôlei */}
               <td className="px-2 py-2.5 text-center border-l border-sand-200 text-blue-700 font-medium">{z(r.vb?.points)}</td>
+              <td className="px-2 py-2.5 text-center text-green-700 font-medium">{z(r.vb?.wins)}</td>
+              <td className="px-2 py-2.5 text-center text-red-600 font-medium">{z(r.vb?.losses)}</td>
               <td className="px-2 py-2.5 text-center text-gray-600">{z(r.vb?.setsWon)}</td>
               <td className="px-2 py-2.5 text-center">{bal(z(r.vb?.setsBalance))}</td>
               <td className="px-2 py-2.5 text-center">{bal(z(r.vb?.pointsBalance))}</td>
               {/* Futevôlei */}
               <td className="px-2 py-2.5 text-center border-l border-sand-200 text-green-700 font-medium">{z(r.fv?.points)}</td>
+              <td className="px-2 py-2.5 text-center text-green-700 font-medium">{z(r.fv?.wins)}</td>
+              <td className="px-2 py-2.5 text-center text-red-600 font-medium">{z(r.fv?.losses)}</td>
               <td className="px-2 py-2.5 text-center text-gray-600">{z(r.fv?.setsWon)}</td>
               <td className="px-2 py-2.5 text-center">{bal(z(r.fv?.setsBalance))}</td>
               <td className="px-2 py-2.5 text-center">{bal(z(r.fv?.pointsBalance))}</td>
               {/* Beach Tennis */}
               <td className="px-2 py-2.5 text-center border-l border-sand-200 text-amber-700 font-medium">{z(r.bt?.points)}</td>
+              <td className="px-2 py-2.5 text-center text-green-700 font-medium">{z(r.bt?.wins)}</td>
+              <td className="px-2 py-2.5 text-center text-red-600 font-medium">{z(r.bt?.losses)}</td>
               <td className="px-2 py-2.5 text-center text-gray-600">{z(r.bt?.pointsFor)}</td>
               <td className="px-2 py-2.5 text-center">{bal(z(r.bt?.pointsBalance))}</td>
             </tr>
