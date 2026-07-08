@@ -52,7 +52,7 @@ export const SPORT_RULES: Record<SportKey, SportRules> = {
   },
   'Beach Tennis': {
     pointsPerSet: 6,
-    bestOf: 1,
+    bestOf: 2, // game + optional tie-break
     setsToWin: 1,
     minDifference: 2,
     hasTieBreak: true,
@@ -70,20 +70,31 @@ export function getSportRules(sport: string): SportRules | null {
   return null;
 }
 
-export function isSetComplete(rules: SportRules, a: number, b: number): boolean {
+export function isGameSetComplete(rules: SportRules, a: number, b: number): boolean {
   if (a < 0 || b < 0) return false;
   const diff = Math.abs(a - b);
+  // 6x6 is valid as a "pending tie-break" state
+  if (a === rules.tieBreakAt && b === rules.tieBreakAt) return true;
+  if (a >= rules.pointsPerSet && diff >= rules.minDifference) return true;
+  if (b >= rules.pointsPerSet && diff >= rules.minDifference) return true;
+  return false;
+}
 
-  if (rules.isBeachTennis) {
-    if (a === rules.tieBreakAt && b === rules.tieBreakAt) {
-      return (a >= rules.tieBreakPoints || b >= rules.tieBreakPoints) && diff >= rules.tieBreakMinDiff;
-    }
-    if (a >= rules.pointsPerSet && diff >= rules.minDifference) return true;
-    if (b >= rules.pointsPerSet && diff >= rules.minDifference) return true;
-    return false;
-  }
+export function isTieBreakSetComplete(rules: SportRules, a: number, b: number): boolean {
+  if (a < 0 || b < 0) return false;
+  const diff = Math.abs(a - b);
+  return (a >= rules.tieBreakPoints || b >= rules.tieBreakPoints) && diff >= rules.tieBreakMinDiff;
+}
 
+export function isSetComplete(rules: SportRules, a: number, b: number): boolean {
+  if (rules.isBeachTennis) return isGameSetComplete(rules, a, b);
+  if (a < 0 || b < 0) return false;
+  const diff = Math.abs(a - b);
   return (a >= rules.pointsPerSet || b >= rules.pointsPerSet) && diff >= rules.minDifference;
+}
+
+export function beachTennisWentToTieBreak(sets: SetScore[]): boolean {
+  return sets.length > 0 && sets[0].team_a === 6 && sets[0].team_b === 6;
 }
 
 export type ValidationResult = {
@@ -96,6 +107,67 @@ export function validateMatch(sport: string, sets: SetScore[]): ValidationResult
   const rules = getSportRules(sport);
   if (!rules) return { valid: false, error: 'Esporte inválido.' };
 
+  if (rules.isBeachTennis) {
+    const gameSet = sets[0];
+    if (!gameSet || (gameSet.team_a === 0 && gameSet.team_b === 0)) {
+      return { valid: false, error: 'Informe o placar do game.' };
+    }
+
+    if (!isGameSetComplete(rules, gameSet.team_a, gameSet.team_b)) {
+      return {
+        valid: false,
+        error: `Placar do game inválido. Termina em ${rules.pointsPerSet} games com diferença de ${rules.minDifference}. Em ${rules.tieBreakAt}x${rules.tieBreakAt} entra em tie-break.`,
+      };
+    }
+
+    const isTieBreak = gameSet.team_a === rules.tieBreakAt && gameSet.team_b === rules.tieBreakAt;
+
+    if (isTieBreak) {
+      const tbSet = sets[1];
+      if (!tbSet || (tbSet.team_a === 0 && tbSet.team_b === 0)) {
+        return { valid: false, error: 'Informe o placar do tie-break (mínimo 7 com diferença de 2).' };
+      }
+      if (!isTieBreakSetComplete(rules, tbSet.team_a, tbSet.team_b)) {
+        return {
+          valid: false,
+          error: `Tie-break inválido. Mínimo ${rules.tieBreakPoints} pontos com diferença de ${rules.tieBreakMinDiff}.`,
+        };
+      }
+      const winner: 'a' | 'b' = tbSet.team_a > tbSet.team_b ? 'a' : 'b';
+      return {
+        valid: true,
+        result: {
+          sets: [gameSet, tbSet],
+          winner,
+          isTieBreak: true,
+          setsWonA: winner === 'a' ? 1 : 0,
+          setsWonB: winner === 'b' ? 1 : 0,
+          pointsForA: gameSet.team_a + tbSet.team_a,
+          pointsForB: gameSet.team_b + tbSet.team_b,
+        },
+      };
+    }
+
+    // Regular game win (no tie-break)
+    if (gameSet.team_a === gameSet.team_b) {
+      return { valid: false, error: 'Placar empatado sem tie-break. Informe um vencedor.' };
+    }
+    const winner: 'a' | 'b' = gameSet.team_a > gameSet.team_b ? 'a' : 'b';
+    return {
+      valid: true,
+      result: {
+        sets: [gameSet],
+        winner,
+        isTieBreak: false,
+        setsWonA: winner === 'a' ? 1 : 0,
+        setsWonB: winner === 'b' ? 1 : 0,
+        pointsForA: gameSet.team_a,
+        pointsForB: gameSet.team_b,
+      },
+    };
+  }
+
+  // Non-beach-tennis sports
   const filled = sets
     .slice(0, rules.bestOf)
     .filter((s) => s.team_a >= 0 && s.team_b >= 0 && !(s.team_a === 0 && s.team_b === 0));
@@ -108,20 +180,14 @@ export function validateMatch(sport: string, sets: SetScore[]): ValidationResult
 
   for (let i = 0; i < filled.length; i++) {
     const s = filled[i];
-
     if (!isSetComplete(rules, s.team_a, s.team_b)) {
       return {
         valid: false,
-        error: `Set ${i + 1} inválido para ${sport}. ` +
-          (rules.isBeachTennis
-            ? `Um set termina em ${rules.pointsPerSet} games com diferença de ${rules.minDifference}. Em ${rules.tieBreakAt}x${rules.tieBreakAt} entra em tie-break até ${rules.tieBreakPoints} com diferença de ${rules.tieBreakMinDiff}.`
-            : `Um set termina em ${rules.pointsPerSet} pontos com diferença mínima de ${rules.minDifference}.`),
+        error: `Set ${i + 1} inválido. Termina em ${rules.pointsPerSet} pontos com diferença mínima de ${rules.minDifference}.`,
       };
     }
-
     if (s.team_a > s.team_b) setsWonA++;
     else setsWonB++;
-
     pointsForA += s.team_a;
     pointsForB += s.team_b;
   }
@@ -133,8 +199,7 @@ export function validateMatch(sport: string, sets: SetScore[]): ValidationResult
   if (setsWonA < rules.setsToWin && setsWonB < rules.setsToWin) {
     return {
       valid: false,
-      error: `A partida não foi encerrada. É necessário vencer ${rules.setsToWin} set(s). ` +
-        `Placar atual: ${setsWonA}x${setsWonB}.`,
+      error: `Partida não encerrada. Necessário vencer ${rules.setsToWin} sets. Atual: ${setsWonA}x${setsWonB}.`,
     };
   }
 
@@ -142,26 +207,12 @@ export function validateMatch(sport: string, sets: SetScore[]): ValidationResult
     return { valid: false, error: 'Placar de sets excede o necessário.' };
   }
 
-  if (filled.length > rules.bestOf) {
-    return { valid: false, error: `Número de sets excede o máximo de ${rules.bestOf}.` };
-  }
-
   const winner = setsWonA > setsWonB ? 'a' : 'b';
-  const isTieBreak = rules.isBeachTennis
-    ? filled[0].team_a === rules.tieBreakAt && filled[0].team_b === rules.tieBreakAt
-    : filled.length === 3;
+  const isTieBreak = filled.length === 3;
 
   return {
     valid: true,
-    result: {
-      sets: filled,
-      winner,
-      isTieBreak,
-      setsWonA,
-      setsWonB,
-      pointsForA,
-      pointsForB,
-    },
+    result: { sets: filled, winner, isTieBreak, setsWonA, setsWonB, pointsForA, pointsForB },
   };
 }
 

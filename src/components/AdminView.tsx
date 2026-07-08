@@ -143,7 +143,10 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
     setEditCategory(m.category);
     setEditTeamA(m.team_a_id);
     setEditTeamB(m.team_b_id);
-    const loaded = (m.match_sets ?? []).slice(0, MAX_SETS);
+    const loaded = (m.match_sets ?? [])
+      .slice()
+      .sort((a, b) => a.set_number - b.set_number)
+      .slice(0, MAX_SETS);
     const base: SetScore[] = emptySets();
     for (let i = 0; i < loaded.length; i++) {
       base[i] = { team_a: loaded[i].team_a_score, team_b: loaded[i].team_b_score };
@@ -251,13 +254,13 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
 
   const sportHint = currentRules
     ? currentRules.isBeachTennis
-      ? `Game único até ${currentRules.pointsPerSet} games com diferença de ${currentRules.minDifference}. Em ${currentRules.tieBreakAt}x${currentRules.tieBreakAt} entra em tie-break até ${currentRules.tieBreakPoints} com diferença de ${currentRules.tieBreakMinDiff}.`
+      ? `Game único até ${currentRules.pointsPerSet} games (diff ${currentRules.minDifference}). Em ${currentRules.tieBreakAt}x${currentRules.tieBreakAt} aparece o campo de tie-break (mín. ${currentRules.tieBreakPoints} com diff ${currentRules.tieBreakMinDiff}). Vitória no tie-break = 2 pts; derrota = 1 pt.`
       : `Melhor de 3 sets até ${currentRules.pointsPerSet} pontos. Vence quem ganhar 2 sets.`
     : '';
 
   const editHint = editRules
     ? editRules.isBeachTennis
-      ? `Game único até ${editRules.pointsPerSet} games com diferença de ${editRules.minDifference}. Em ${editRules.tieBreakAt}x${editRules.tieBreakAt} entra em tie-break até ${editRules.tieBreakPoints} com diferença de ${editRules.tieBreakMinDiff}.`
+      ? `Game único até ${editRules.pointsPerSet} games (diff ${editRules.minDifference}). Em ${editRules.tieBreakAt}x${editRules.tieBreakAt} aparece o campo de tie-break (mín. ${editRules.tieBreakPoints} com diff ${editRules.tieBreakMinDiff}). Vitória no tie-break = 2 pts; derrota = 1 pt.`
       : `Melhor de 3 sets até ${editRules.pointsPerSet} pontos. Vence quem ganhar 2 sets.`
     : '';
 
@@ -373,30 +376,35 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
                 <label className="block text-xs font-medium text-gray-600">
                   {currentRules?.isBeachTennis ? 'Placar do Game' : 'Placar dos Sets'}
                 </label>
-                {sets.slice(0, currentRules?.bestOf ?? MAX_SETS).map((s, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-500 w-12">
-                      {currentRules?.isBeachTennis ? 'Game' : `Set ${i + 1}`}
-                    </span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={99}
-                      value={s.team_a}
-                      onChange={(e) => updateSet(i, 'team_a', e.target.value)}
-                      className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                    <span className="text-gray-400 text-xs">x</span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={99}
-                      value={s.team_b}
-                      onChange={(e) => updateSet(i, 'team_b', e.target.value)}
-                      className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                ))}
+                {currentRules?.isBeachTennis ? (
+                  <>
+                    {/* Beach Tennis: game row */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-500 w-16">Game</span>
+                      <input type="number" min={0} max={99} value={sets[0].team_a} onChange={(e) => updateSet(0, 'team_a', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                      <span className="text-gray-400 text-xs">x</span>
+                      <input type="number" min={0} max={99} value={sets[0].team_b} onChange={(e) => updateSet(0, 'team_b', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                    </div>
+                    {/* Tie-break row: only visible when game is 6x6 */}
+                    {sets[0].team_a === 6 && sets[0].team_b === 6 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-amber-600 w-16">Tie-Break</span>
+                        <input type="number" min={0} max={99} value={sets[1].team_a} onChange={(e) => updateSet(1, 'team_a', e.target.value)} className="w-20 rounded-lg border border-amber-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-amber-400" />
+                        <span className="text-gray-400 text-xs">x</span>
+                        <input type="number" min={0} max={99} value={sets[1].team_b} onChange={(e) => updateSet(1, 'team_b', e.target.value)} className="w-20 rounded-lg border border-amber-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-amber-400" />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  sets.slice(0, currentRules?.bestOf ?? MAX_SETS).map((s, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-500 w-16">Set {i + 1}</span>
+                      <input type="number" min={0} max={99} value={s.team_a} onChange={(e) => updateSet(i, 'team_a', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                      <span className="text-gray-400 text-xs">x</span>
+                      <input type="number" min={0} max={99} value={s.team_b} onChange={(e) => updateSet(i, 'team_b', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                    </div>
+                  ))
+                )}
               </div>
 
               {formError && (
@@ -526,30 +534,33 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
                     <label className="block text-xs font-medium text-gray-600">
                       {editRules?.isBeachTennis ? 'Placar do Game' : 'Placar dos Sets'}
                     </label>
-                    {editSets.slice(0, editRules?.bestOf ?? MAX_SETS).map((s, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-500 w-12">
-                          {editRules?.isBeachTennis ? 'Game' : `Set ${i + 1}`}
-                        </span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={99}
-                          value={s.team_a}
-                          onChange={(e) => updateEditSet(i, 'team_a', e.target.value)}
-                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                        <span className="text-gray-400 text-xs">x</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={99}
-                          value={s.team_b}
-                          onChange={(e) => updateEditSet(i, 'team_b', e.target.value)}
-                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
-                    ))}
+                    {editRules?.isBeachTennis ? (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-gray-500 w-16">Game</span>
+                          <input type="number" min={0} max={99} value={editSets[0].team_a} onChange={(e) => updateEditSet(0, 'team_a', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                          <span className="text-gray-400 text-xs">x</span>
+                          <input type="number" min={0} max={99} value={editSets[0].team_b} onChange={(e) => updateEditSet(0, 'team_b', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                        </div>
+                        {editSets[0].team_a === 6 && editSets[0].team_b === 6 && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-amber-600 w-16">Tie-Break</span>
+                            <input type="number" min={0} max={99} value={editSets[1].team_a} onChange={(e) => updateEditSet(1, 'team_a', e.target.value)} className="w-20 rounded-lg border border-amber-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-amber-400" />
+                            <span className="text-gray-400 text-xs">x</span>
+                            <input type="number" min={0} max={99} value={editSets[1].team_b} onChange={(e) => updateEditSet(1, 'team_b', e.target.value)} className="w-20 rounded-lg border border-amber-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-amber-400" />
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      editSets.slice(0, editRules?.bestOf ?? MAX_SETS).map((s, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-gray-500 w-16">Set {i + 1}</span>
+                          <input type="number" min={0} max={99} value={s.team_a} onChange={(e) => updateEditSet(i, 'team_a', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                          <span className="text-gray-400 text-xs">x</span>
+                          <input type="number" min={0} max={99} value={s.team_b} onChange={(e) => updateEditSet(i, 'team_b', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                        </div>
+                      ))
+                    )}
                   </div>
 
                   {editError && (
