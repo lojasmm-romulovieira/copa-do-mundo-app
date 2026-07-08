@@ -22,7 +22,8 @@ export type SportRules = {
   minDifference: number;
   hasTieBreak: boolean;
   tieBreakAt: number;
-  superTieBreakPoints: number;
+  tieBreakPoints: number;
+  tieBreakMinDiff: number;
   isBeachTennis: boolean;
 };
 
@@ -34,7 +35,8 @@ export const SPORT_RULES: Record<SportKey, SportRules> = {
     minDifference: 1,
     hasTieBreak: false,
     tieBreakAt: 0,
-    superTieBreakPoints: 0,
+    tieBreakPoints: 0,
+    tieBreakMinDiff: 0,
     isBeachTennis: false,
   },
   Vôlei: {
@@ -44,17 +46,19 @@ export const SPORT_RULES: Record<SportKey, SportRules> = {
     minDifference: 1,
     hasTieBreak: false,
     tieBreakAt: 0,
-    superTieBreakPoints: 0,
+    tieBreakPoints: 0,
+    tieBreakMinDiff: 0,
     isBeachTennis: false,
   },
   'Beach Tennis': {
     pointsPerSet: 6,
-    bestOf: 3,
-    setsToWin: 2,
+    bestOf: 1,
+    setsToWin: 1,
     minDifference: 2,
     hasTieBreak: true,
     tieBreakAt: 6,
-    superTieBreakPoints: 7,
+    tieBreakPoints: 7,
+    tieBreakMinDiff: 2,
     isBeachTennis: true,
   },
 };
@@ -66,24 +70,20 @@ export function getSportRules(sport: string): SportRules | null {
   return null;
 }
 
-export function isSetComplete(rules: SportRules, a: number, b: number, setNumber: number): boolean {
+export function isSetComplete(rules: SportRules, a: number, b: number): boolean {
   if (a < 0 || b < 0) return false;
-  const target = rules.pointsPerSet;
   const diff = Math.abs(a - b);
 
   if (rules.isBeachTennis) {
-    const isThirdSetSuperTieBreak = setNumber === 3;
-    if (isThirdSetSuperTieBreak) {
-      const tbTarget = rules.superTieBreakPoints;
-      return (a >= tbTarget || b >= tbTarget) && diff >= rules.minDifference;
+    if (a === rules.tieBreakAt && b === rules.tieBreakAt) {
+      return (a >= rules.tieBreakPoints || b >= rules.tieBreakPoints) && diff >= rules.tieBreakMinDiff;
     }
-    if (a === rules.tieBreakAt && b === rules.tieBreakAt) return false;
-    if (a >= target && diff >= rules.minDifference) return true;
-    if (b >= target && diff >= rules.minDifference) return true;
+    if (a >= rules.pointsPerSet && diff >= rules.minDifference) return true;
+    if (b >= rules.pointsPerSet && diff >= rules.minDifference) return true;
     return false;
   }
 
-  return (a >= target || b >= target) && diff >= rules.minDifference;
+  return (a >= rules.pointsPerSet || b >= rules.pointsPerSet) && diff >= rules.minDifference;
 }
 
 export type ValidationResult = {
@@ -96,7 +96,9 @@ export function validateMatch(sport: string, sets: SetScore[]): ValidationResult
   const rules = getSportRules(sport);
   if (!rules) return { valid: false, error: 'Esporte inválido.' };
 
-  const filled = sets.filter((s) => s.team_a >= 0 && s.team_b >= 0 && !(s.team_a === 0 && s.team_b === 0));
+  const filled = sets
+    .slice(0, rules.bestOf)
+    .filter((s) => s.team_a >= 0 && s.team_b >= 0 && !(s.team_a === 0 && s.team_b === 0));
   if (filled.length === 0) return { valid: false, error: 'Informe ao menos um set.' };
 
   let setsWonA = 0;
@@ -106,14 +108,13 @@ export function validateMatch(sport: string, sets: SetScore[]): ValidationResult
 
   for (let i = 0; i < filled.length; i++) {
     const s = filled[i];
-    const setNum = i + 1;
 
-    if (!isSetComplete(rules, s.team_a, s.team_b, setNum)) {
+    if (!isSetComplete(rules, s.team_a, s.team_b)) {
       return {
         valid: false,
-        error: `Set ${setNum} inválido para ${sport}. ` +
+        error: `Set ${i + 1} inválido para ${sport}. ` +
           (rules.isBeachTennis
-            ? `Um set termina em ${rules.pointsPerSet} games com diferença de ${rules.minDifference} (tie-break em ${rules.tieBreakAt}x${rules.tieBreakAt}).`
+            ? `Um set termina em ${rules.pointsPerSet} games com diferença de ${rules.minDifference}. Em ${rules.tieBreakAt}x${rules.tieBreakAt} entra em tie-break até ${rules.tieBreakPoints} com diferença de ${rules.tieBreakMinDiff}.`
             : `Um set termina em ${rules.pointsPerSet} pontos com diferença mínima de ${rules.minDifference}.`),
       };
     }
@@ -132,7 +133,7 @@ export function validateMatch(sport: string, sets: SetScore[]): ValidationResult
   if (setsWonA < rules.setsToWin && setsWonB < rules.setsToWin) {
     return {
       valid: false,
-      error: `A partida não foi encerrada. É necessário vencer ${rules.setsToWin} sets. ` +
+      error: `A partida não foi encerrada. É necessário vencer ${rules.setsToWin} set(s). ` +
         `Placar atual: ${setsWonA}x${setsWonB}.`,
     };
   }
@@ -146,8 +147,9 @@ export function validateMatch(sport: string, sets: SetScore[]): ValidationResult
   }
 
   const winner = setsWonA > setsWonB ? 'a' : 'b';
-  const wentToThreeSets = filled.length === 3;
-  const isTieBreak = rules.isBeachTennis && wentToThreeSets;
+  const isTieBreak = rules.isBeachTennis
+    ? filled[0].team_a === rules.tieBreakAt && filled[0].team_b === rules.tieBreakAt
+    : filled.length === 3;
 
   return {
     valid: true,

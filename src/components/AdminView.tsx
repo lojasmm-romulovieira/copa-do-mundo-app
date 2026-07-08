@@ -254,13 +254,13 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
 
   const sportHint = currentRules
     ? currentRules.isBeachTennis
-      ? `Melhor de 3 sets até ${currentRules.pointsPerSet} games (tie-break em ${currentRules.tieBreakAt}x${currentRules.tieBreakAt}). 3º set = super tie-break até ${currentRules.superTieBreakPoints}.`
+      ? `Game único até ${currentRules.pointsPerSet} games com diferença de ${currentRules.minDifference}. Em ${currentRules.tieBreakAt}x${currentRules.tieBreakAt} entra em tie-break até ${currentRules.tieBreakPoints} com diferença de ${currentRules.tieBreakMinDiff}.`
       : `Melhor de 3 sets até ${currentRules.pointsPerSet} pontos. Vence quem ganhar 2 sets.`
     : '';
 
   const editHint = editRules
     ? editRules.isBeachTennis
-      ? `Melhor de 3 sets até ${editRules.pointsPerSet} games (tie-break em ${editRules.tieBreakAt}x${editRules.tieBreakAt}). 3º set = super tie-break até ${editRules.superTieBreakPoints}.`
+      ? `Game único até ${editRules.pointsPerSet} games com diferença de ${editRules.minDifference}. Em ${editRules.tieBreakAt}x${editRules.tieBreakAt} entra em tie-break até ${editRules.tieBreakPoints} com diferença de ${editRules.tieBreakMinDiff}.`
       : `Melhor de 3 sets até ${editRules.pointsPerSet} pontos. Vence quem ganhar 2 sets.`
     : '';
 
@@ -373,10 +373,14 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
 
               {/* Sets input */}
               <div className="space-y-2">
-                <label className="block text-xs font-medium text-gray-600">Placar dos Sets</label>
-                {sets.map((s, i) => (
+                <label className="block text-xs font-medium text-gray-600">
+                  {currentRules?.isBeachTennis ? 'Placar do Game' : 'Placar dos Sets'}
+                </label>
+                {sets.slice(0, currentRules?.bestOf ?? MAX_SETS).map((s, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-500 w-12">Set {i + 1}</span>
+                    <span className="text-xs font-medium text-gray-500 w-12">
+                      {currentRules?.isBeachTennis ? 'Game' : `Set ${i + 1}`}
+                    </span>
                     <input
                       type="number"
                       min={0}
@@ -522,10 +526,14 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
                   )}
 
                   <div className="space-y-2">
-                    <label className="block text-xs font-medium text-gray-600">Placar dos Sets</label>
-                    {editSets.map((s, i) => (
+                    <label className="block text-xs font-medium text-gray-600">
+                      {editRules?.isBeachTennis ? 'Placar do Game' : 'Placar dos Sets'}
+                    </label>
+                    {editSets.slice(0, editRules?.bestOf ?? MAX_SETS).map((s, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-500 w-12">Set {i + 1}</span>
+                        <span className="text-xs font-medium text-gray-500 w-12">
+                          {editRules?.isBeachTennis ? 'Game' : `Set ${i + 1}`}
+                        </span>
                         <input
                           type="number"
                           min={0}
