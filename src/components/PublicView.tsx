@@ -9,13 +9,19 @@ interface PublicViewProps {
   onAdminClick: () => void;
 }
 
-function RankingTable({ ranking, sport, category }: { ranking: RankingEntry[]; sport: string; category?: string }) {
-  const isBT = sport === 'Beach Tennis';
+function bal(n: number) {
+  return (
+    <span className={n > 0 ? 'text-green-700' : n < 0 ? 'text-red-600' : 'text-gray-500'}>
+      {n > 0 ? '+' : ''}{n}
+    </span>
+  );
+}
 
+function SingleSportTable({ ranking, sport }: { ranking: RankingEntry[]; sport: string }) {
+  const isBT = sport === 'Beach Tennis';
   if (ranking.length === 0) {
     return <div className="px-4 py-6 text-center text-sm text-gray-500">Nenhum resultado disponível.</div>;
   }
-
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -23,7 +29,6 @@ function RankingTable({ ranking, sport, category }: { ranking: RankingEntry[]; s
           <tr>
             <th className="px-3 py-2 text-left font-semibold w-8">#</th>
             <th className="px-3 py-2 text-left font-semibold">Seleção</th>
-            {category && <th className="px-3 py-2 text-left font-semibold text-xs text-gray-500">Cat.</th>}
             <th className="px-3 py-2 text-center font-semibold" title="Pontos na classificação">Pts</th>
             <th className="px-3 py-2 text-center font-semibold" title="Vitórias">V</th>
             <th className="px-3 py-2 text-center font-semibold" title="Derrotas">D</th>
@@ -50,15 +55,102 @@ function RankingTable({ ranking, sport, category }: { ranking: RankingEntry[]; s
               {!isBT && (
                 <>
                   <td className="px-3 py-2.5 text-center text-gray-600">{r.setsWon}</td>
-                  <td className={`px-3 py-2.5 text-center font-medium ${r.setsBalance > 0 ? 'text-green-700' : r.setsBalance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                    {r.setsBalance > 0 ? '+' : ''}{r.setsBalance}
-                  </td>
+                  <td className="px-3 py-2.5 text-center font-medium">{bal(r.setsBalance)}</td>
                 </>
               )}
               <td className="px-3 py-2.5 text-center text-gray-600">{r.pointsFor}</td>
-              <td className={`px-3 py-2.5 text-center font-medium ${r.pointsBalance > 0 ? 'text-green-700' : r.pointsBalance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                {r.pointsBalance > 0 ? '+' : ''}{r.pointsBalance}
-              </td>
+              <td className="px-3 py-2.5 text-center font-medium">{bal(r.pointsBalance)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function AllSportsTable({
+  teams,
+  vb,
+  fv,
+  bt,
+}: {
+  teams: string[];
+  vb: Map<string, RankingEntry>;
+  fv: Map<string, RankingEntry>;
+  bt: Map<string, RankingEntry>;
+}) {
+  const rows = teams
+    .map((id) => ({
+      id,
+      name: vb.get(id)?.team.name ?? fv.get(id)?.team.name ?? bt.get(id)?.team.name ?? id,
+      totalPts: (vb.get(id)?.points ?? 0) + (fv.get(id)?.points ?? 0) + (bt.get(id)?.points ?? 0),
+      vb: vb.get(id),
+      fv: fv.get(id),
+      bt: bt.get(id),
+    }))
+    .filter((r) => r.totalPts > 0 || (r.vb?.matchesPlayed ?? 0) + (r.fv?.matchesPlayed ?? 0) + (r.bt?.matchesPlayed ?? 0) > 0)
+    .sort((a, b) => {
+      if (b.totalPts !== a.totalPts) return b.totalPts - a.totalPts;
+      const aW = (a.vb?.wins ?? 0) + (a.fv?.wins ?? 0) + (a.bt?.wins ?? 0);
+      const bW = (b.vb?.wins ?? 0) + (b.fv?.wins ?? 0) + (b.bt?.wins ?? 0);
+      return bW - aW;
+    });
+
+  if (rows.length === 0) {
+    return <div className="px-4 py-6 text-center text-sm text-gray-500">Nenhum resultado disponível.</div>;
+  }
+
+  const z = (n: number | undefined) => n ?? 0;
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead className="bg-sand-100 text-gray-600">
+          <tr>
+            <th className="px-3 py-2 text-left font-semibold w-8" rowSpan={2}>#</th>
+            <th className="px-3 py-2 text-left font-semibold" rowSpan={2}>Seleção</th>
+            <th className="px-3 py-2 text-center font-semibold" rowSpan={2} title="Pontos totais">Pts</th>
+            <th className="px-3 py-2 text-center font-semibold border-l border-sand-300 bg-blue-50 text-blue-700" colSpan={4}>Vôlei de Areia</th>
+            <th className="px-3 py-2 text-center font-semibold border-l border-sand-300 bg-green-50 text-green-700" colSpan={4}>Futevôlei</th>
+            <th className="px-3 py-2 text-center font-semibold border-l border-sand-300 bg-amber-50 text-amber-700" colSpan={3}>Beach Tennis</th>
+          </tr>
+          <tr>
+            {/* Vôlei */}
+            <th className="px-2 py-1.5 text-center font-medium border-l border-sand-300 bg-blue-50 text-blue-600" title="Pontos Vôlei">Pts</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-blue-50 text-blue-600" title="Sets Vencidos">SV</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-blue-50 text-blue-600" title="Saldo de Sets">SS</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-blue-50 text-blue-600" title="Saldo de Pontos">SP</th>
+            {/* Futevôlei */}
+            <th className="px-2 py-1.5 text-center font-medium border-l border-sand-300 bg-green-50 text-green-600" title="Pontos Futevôlei">Pts</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-green-50 text-green-600" title="Sets Vencidos">SV</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-green-50 text-green-600" title="Saldo de Sets">SS</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-green-50 text-green-600" title="Saldo de Pontos">SP</th>
+            {/* Beach Tennis */}
+            <th className="px-2 py-1.5 text-center font-medium border-l border-sand-300 bg-amber-50 text-amber-600" title="Pontos Beach Tennis">Pts</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-amber-50 text-amber-600" title="Games Pró">GP</th>
+            <th className="px-2 py-1.5 text-center font-medium bg-amber-50 text-amber-600" title="Saldo de Pontos (game + TI)">SP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={r.id} className="border-t border-sand-100 hover:bg-sand-50 transition-colors">
+              <td className="px-3 py-2.5 font-bold text-primary-700">{i + 1}</td>
+              <td className="px-3 py-2.5 font-medium">{r.name}</td>
+              <td className="px-3 py-2.5 text-center font-bold text-primary-700">{r.totalPts}</td>
+              {/* Vôlei */}
+              <td className="px-2 py-2.5 text-center border-l border-sand-200 text-blue-700 font-medium">{z(r.vb?.points)}</td>
+              <td className="px-2 py-2.5 text-center text-gray-600">{z(r.vb?.setsWon)}</td>
+              <td className="px-2 py-2.5 text-center">{bal(z(r.vb?.setsBalance))}</td>
+              <td className="px-2 py-2.5 text-center">{bal(z(r.vb?.pointsBalance))}</td>
+              {/* Futevôlei */}
+              <td className="px-2 py-2.5 text-center border-l border-sand-200 text-green-700 font-medium">{z(r.fv?.points)}</td>
+              <td className="px-2 py-2.5 text-center text-gray-600">{z(r.fv?.setsWon)}</td>
+              <td className="px-2 py-2.5 text-center">{bal(z(r.fv?.setsBalance))}</td>
+              <td className="px-2 py-2.5 text-center">{bal(z(r.fv?.pointsBalance))}</td>
+              {/* Beach Tennis */}
+              <td className="px-2 py-2.5 text-center border-l border-sand-200 text-amber-700 font-medium">{z(r.bt?.points)}</td>
+              <td className="px-2 py-2.5 text-center text-gray-600">{z(r.bt?.pointsFor)}</td>
+              <td className="px-2 py-2.5 text-center">{bal(z(r.bt?.pointsBalance))}</td>
             </tr>
           ))}
         </tbody>
@@ -74,15 +166,26 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
   const [showFilters, setShowFilters] = useState(false);
 
   const availableCategories = selectedSport ? getCategories(selectedSport) : [];
-
   const totals = computeTotals(matches, selectedSport || undefined, selectedCategory || undefined);
-  const finishedMatches = matches.filter((m) => m.winner_id);
 
+  const finishedMatches = matches.filter((m) => m.winner_id);
   const filteredMatches = finishedMatches.filter((m) => {
     if (selectedSport && m.sport !== selectedSport) return false;
     if (selectedCategory && m.category !== selectedCategory) return false;
     return true;
   });
+
+  const vbRanking = computeRanking(teams, matches, 'Vôlei de Areia', undefined);
+  const fvRanking = computeRanking(teams, matches, 'Futevôlei', undefined);
+  const btRanking = computeRanking(teams, matches, 'Beach Tennis', undefined);
+  const vbMap = new Map(vbRanking.map((r) => [r.team.id, r]));
+  const fvMap = new Map(fvRanking.map((r) => [r.team.id, r]));
+  const btMap = new Map(btRanking.map((r) => [r.team.id, r]));
+  const allTeamIds = teams.map((t) => t.id);
+
+  const filteredSportRanking = selectedSport
+    ? computeRanking(teams, matches, selectedSport, selectedCategory || undefined)
+    : [];
 
   if (loading) {
     return (
@@ -91,8 +194,6 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
       </div>
     );
   }
-
-  const sportsToShow = selectedSport ? [selectedSport] : SPORTS;
 
   return (
     <div className="min-h-screen bg-sand-50">
@@ -197,22 +298,22 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
           )}
         </div>
 
-        {/* Rankings — one section per sport */}
-        {sportsToShow.map((sport) => {
-          const sportRanking = computeRanking(teams, matches, sport, selectedCategory || undefined);
-          return (
-            <div key={sport} className="bg-white rounded-xl shadow-sm border border-sand-200 overflow-hidden">
-              <div className="px-4 py-3 border-b border-sand-200">
-                <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-yellow-500" />
-                  Classificação — {sport}
-                  {selectedCategory && <span className="text-sm font-normal text-gray-500">· {selectedCategory}</span>}
-                </h2>
-              </div>
-              <RankingTable ranking={sportRanking} sport={sport} category={selectedCategory || undefined} />
-            </div>
-          );
-        })}
+        {/* Ranking */}
+        <div className="bg-white rounded-xl shadow-sm border border-sand-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-sand-200">
+            <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-yellow-500" />
+              Classificação Geral
+              {selectedSport && <span className="text-sm font-normal text-gray-500">· {selectedSport}</span>}
+              {selectedCategory && <span className="text-sm font-normal text-gray-500">· {selectedCategory}</span>}
+            </h2>
+          </div>
+          {selectedSport ? (
+            <SingleSportTable ranking={filteredSportRanking} sport={selectedSport} />
+          ) : (
+            <AllSportsTable teams={allTeamIds} vb={vbMap} fv={fvMap} bt={btMap} />
+          )}
+        </div>
 
         {/* Results */}
         <div className="bg-white rounded-xl shadow-sm border border-sand-200 overflow-hidden">
