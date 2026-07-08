@@ -11,6 +11,15 @@ export type Team = {
   created_at: string;
 };
 
+export type MatchSet = {
+  id: string;
+  match_id: string;
+  set_number: number;
+  team_a_score: number;
+  team_b_score: number;
+  created_at: string;
+};
+
 export type Match = {
   id: string;
   sport: string;
@@ -21,10 +30,17 @@ export type Match = {
   is_tie_break: boolean;
   team_a_points: number;
   team_b_points: number;
+  team_a_sets_won: number;
+  team_b_sets_won: number;
+  team_a_points_for: number;
+  team_b_points_for: number;
+  team_a_points_against: number;
+  team_b_points_against: number;
   created_at: string;
   team_a?: Team;
   team_b?: Team;
   winner?: Team;
+  match_sets?: MatchSet[];
 };
 
 export { SPORTS, getCategories } from '../config';

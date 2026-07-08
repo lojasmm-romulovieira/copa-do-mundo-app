@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Trophy, ListFilter as Filter, Shield, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trophy, ListFilter as Filter, Shield, ChevronDown, ChevronUp, Target, Award, Activity, Layers } from 'lucide-react';
 import { useRealtimeData } from '../hooks/useRealtime';
-import { computeRanking } from '../lib/ranking';
+import { computeRanking, computeTotals } from '../lib/ranking';
 import { SPORTS, getCategories } from '../config';
 
 interface PublicViewProps {
@@ -17,6 +17,7 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
   const availableCategories = selectedSport ? getCategories(selectedSport) : [];
 
   const ranking = computeRanking(teams, matches, selectedSport || undefined, selectedCategory || undefined);
+  const totals = computeTotals(matches, selectedSport || undefined, selectedCategory || undefined);
   const finishedMatches = matches.filter((m) => m.winner_id);
 
   const filteredMatches = finishedMatches.filter((m) => {
@@ -56,6 +57,38 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+        {/* Totalizador */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="bg-white rounded-xl shadow-sm border border-sand-200 p-4">
+            <div className="flex items-center gap-2 text-primary-600 mb-1">
+              <Target className="w-4 h-4" />
+              <span className="text-xs font-medium text-gray-500">Total de Pontos</span>
+            </div>
+            <div className="text-2xl font-bold text-primary-700">{totals.totalPoints}</div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-sand-200 p-4">
+            <div className="flex items-center gap-2 text-green-600 mb-1">
+              <Award className="w-4 h-4" />
+              <span className="text-xs font-medium text-gray-500">Vitórias</span>
+            </div>
+            <div className="text-2xl font-bold text-green-700">{totals.totalWins}</div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-sand-200 p-4">
+            <div className="flex items-center gap-2 text-amber-600 mb-1">
+              <Activity className="w-4 h-4" />
+              <span className="text-xs font-medium text-gray-500">Partidas</span>
+            </div>
+            <div className="text-2xl font-bold text-amber-700">{totals.totalMatches}</div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-sand-200 p-4">
+            <div className="flex items-center gap-2 text-sand-700 mb-1">
+              <Layers className="w-4 h-4" />
+              <span className="text-xs font-medium text-gray-500">Sets Disputados</span>
+            </div>
+            <div className="text-2xl font-bold text-sand-800">{totals.totalSets}</div>
+          </div>
+        </div>
+
         {/* Filters */}
         <div className="bg-white rounded-xl shadow-sm border border-sand-200 overflow-hidden">
           <button
@@ -123,9 +156,14 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
                   <tr>
                     <th className="px-3 py-2 text-left font-semibold w-12">#</th>
                     <th className="px-3 py-2 text-left font-semibold">Seleção</th>
-                    <th className="px-3 py-2 text-center font-semibold">Pts</th>
-                    <th className="px-3 py-2 text-center font-semibold">V</th>
-                    <th className="px-3 py-2 text-center font-semibold">J</th>
+                    <th className="px-3 py-2 text-center font-semibold" title="Pontos">Pts</th>
+                    <th className="px-3 py-2 text-center font-semibold" title="Vitórias">V</th>
+                    <th className="px-3 py-2 text-center font-semibold" title="Derrotas">D</th>
+                    <th className="px-3 py-2 text-center font-semibold" title="Jogos">J</th>
+                    <th className="px-3 py-2 text-center font-semibold" title="Sets Vencidos">SV</th>
+                    <th className="px-3 py-2 text-center font-semibold" title="Saldo de Sets">SS</th>
+                    <th className="px-3 py-2 text-center font-semibold" title="Pontos/Games Pró">PP</th>
+                    <th className="px-3 py-2 text-center font-semibold" title="Saldo de Pontos/Games">SP</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -134,8 +172,17 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
                       <td className="px-3 py-2.5 font-bold text-primary-700">{i + 1}</td>
                       <td className="px-3 py-2.5 font-medium">{r.team.name}</td>
                       <td className="px-3 py-2.5 text-center font-bold text-primary-700">{r.points}</td>
-                      <td className="px-3 py-2.5 text-center text-gray-600">{r.wins}</td>
+                      <td className="px-3 py-2.5 text-center text-green-700 font-medium">{r.wins}</td>
+                      <td className="px-3 py-2.5 text-center text-red-600 font-medium">{r.losses}</td>
                       <td className="px-3 py-2.5 text-center text-gray-600">{r.matchesPlayed}</td>
+                      <td className="px-3 py-2.5 text-center text-gray-600">{r.setsWon}</td>
+                      <td className={`px-3 py-2.5 text-center font-medium ${r.setsBalance > 0 ? 'text-green-700' : r.setsBalance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                        {r.setsBalance > 0 ? '+' : ''}{r.setsBalance}
+                      </td>
+                      <td className="px-3 py-2.5 text-center text-gray-600">{r.pointsFor}</td>
+                      <td className={`px-3 py-2.5 text-center font-medium ${r.pointsBalance > 0 ? 'text-green-700' : r.pointsBalance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                        {r.pointsBalance > 0 ? '+' : ''}{r.pointsBalance}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -153,31 +200,43 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
             <div className="px-4 py-8 text-center text-sm text-gray-500">Nenhum jogo encerrado para os filtros selecionados.</div>
           ) : (
             <div className="divide-y divide-sand-100">
-              {filteredMatches.map((m) => (
-                <div key={m.id} className="px-4 py-3 flex items-center justify-between hover:bg-sand-50 transition-colors">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700">{m.sport}</span>
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-sand-200 text-sand-800">{m.category}</span>
+              {filteredMatches.map((m) => {
+                const setScores = (m.match_sets ?? [])
+                  .slice()
+                  .sort((a, b) => a.set_number - b.set_number)
+                  .map((s) => `${s.team_a_score}x${s.team_b_score}`)
+                  .join(' · ');
+                return (
+                  <div key={m.id} className="px-4 py-3 flex items-center justify-between hover:bg-sand-50 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700">{m.sport}</span>
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-sand-200 text-sand-800">{m.category}</span>
+                        {m.is_tie_break && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Tie-Break</span>}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className={`font-medium ${m.winner_id === m.team_a_id ? 'text-green-700' : 'text-gray-700'}`}>
+                          {m.team_a?.name}
+                        </span>
+                        <span className="text-gray-400">vs</span>
+                        <span className={`font-medium ${m.winner_id === m.team_b_id ? 'text-green-700' : 'text-gray-700'}`}>
+                          {m.team_b?.name}
+                        </span>
+                      </div>
+                      {setScores && (
+                        <div className="text-xs text-gray-500 mt-0.5">Sets: {setScores}</div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className={`font-medium ${m.winner_id === m.team_a_id ? 'text-green-700' : 'text-gray-700'}`}>
-                        {m.team_a?.name}
-                      </span>
-                      <span className="text-gray-400">vs</span>
-                      <span className={`font-medium ${m.winner_id === m.team_b_id ? 'text-green-700' : 'text-gray-700'}`}>
-                        {m.team_b?.name}
-                      </span>
+                    <div className="text-right">
+                      <div className="text-xs text-gray-500">{m.is_tie_break ? 'Tie-Break' : 'Normal'}</div>
+                      <div className="text-sm font-bold text-primary-700">
+                        {m.team_a_points} - {m.team_b_points} pts
+                      </div>
+                      <div className="text-xs text-gray-500">Sets {m.team_a_sets_won}x{m.team_b_sets_won}</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-xs text-gray-500">{m.is_tie_break ? 'Tie-Break' : 'Normal'}</div>
-                    <div className="text-sm font-bold text-primary-700">
-                      {m.team_a_points} - {m.team_b_points}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
