@@ -95,7 +95,10 @@ export function isSetComplete(rules: SportRules, a: number, b: number, setIndex 
   if (a < 0 || b < 0) return false;
   const limit = setIndex >= 2 ? rules.thirdSetPoints : rules.pointsPerSet;
   const diff = Math.abs(a - b);
-  return (a === limit || b === limit) && diff >= rules.minDifference;
+  return (
+    (a === limit && b < limit && diff >= rules.minDifference) ||
+    (b === limit && a < limit && diff >= rules.minDifference)
+  );
 }
 
 export function beachTennisWentToTieBreak(sets: SetScore[]): boolean {
