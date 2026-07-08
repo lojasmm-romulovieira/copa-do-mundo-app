@@ -151,42 +151,63 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
             <div className="px-4 py-8 text-center text-sm text-gray-500">Nenhum resultado disponível para os filtros selecionados.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-sand-100 text-gray-600">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-semibold w-12">#</th>
-                    <th className="px-3 py-2 text-left font-semibold">Seleção</th>
-                    <th className="px-3 py-2 text-center font-semibold" title="Pontos">Pts</th>
-                    <th className="px-3 py-2 text-center font-semibold" title="Vitórias">V</th>
-                    <th className="px-3 py-2 text-center font-semibold" title="Derrotas">D</th>
-                    <th className="px-3 py-2 text-center font-semibold" title="Jogos">J</th>
-                    <th className="px-3 py-2 text-center font-semibold" title="Sets Vencidos">SV</th>
-                    <th className="px-3 py-2 text-center font-semibold" title="Saldo de Sets">SS</th>
-                    <th className="px-3 py-2 text-center font-semibold" title="Pontos/Games Pró">PP</th>
-                    <th className="px-3 py-2 text-center font-semibold" title="Saldo de Pontos/Games">SP</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ranking.map((r, i) => (
-                    <tr key={r.team.id} className="border-t border-sand-100 hover:bg-sand-50 transition-colors">
-                      <td className="px-3 py-2.5 font-bold text-primary-700">{i + 1}</td>
-                      <td className="px-3 py-2.5 font-medium">{r.team.name}</td>
-                      <td className="px-3 py-2.5 text-center font-bold text-primary-700">{r.points}</td>
-                      <td className="px-3 py-2.5 text-center text-green-700 font-medium">{r.wins}</td>
-                      <td className="px-3 py-2.5 text-center text-red-600 font-medium">{r.losses}</td>
-                      <td className="px-3 py-2.5 text-center text-gray-600">{r.matchesPlayed}</td>
-                      <td className="px-3 py-2.5 text-center text-gray-600">{r.setsWon}</td>
-                      <td className={`px-3 py-2.5 text-center font-medium ${r.setsBalance > 0 ? 'text-green-700' : r.setsBalance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                        {r.setsBalance > 0 ? '+' : ''}{r.setsBalance}
-                      </td>
-                      <td className="px-3 py-2.5 text-center text-gray-600">{r.pointsFor}</td>
-                      <td className={`px-3 py-2.5 text-center font-medium ${r.pointsBalance > 0 ? 'text-green-700' : r.pointsBalance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                        {r.pointsBalance > 0 ? '+' : ''}{r.pointsBalance}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {(() => {
+                const isBT = selectedSport === 'Beach Tennis';
+                const svLabel = isBT ? 'GV' : 'SV';
+                const svTitle = isBT ? 'Games Vencidos' : 'Sets Vencidos';
+                const ssLabel = isBT ? 'SG' : 'SS';
+                const ssTitle = isBT ? 'Saldo de Games' : 'Saldo de Sets';
+                const ppLabel = isBT ? 'GP' : 'PP';
+                const ppTitle = isBT ? 'Games Pró' : 'Pontos Pró';
+                const spLabel = 'SP';
+                const spTitle = isBT ? 'Saldo de Pontos (game + TI)' : 'Saldo de Pontos';
+                return (
+                  <table className="w-full text-sm">
+                    <thead className="bg-sand-100 text-gray-600">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-semibold w-12">#</th>
+                        <th className="px-3 py-2 text-left font-semibold">Seleção</th>
+                        <th className="px-3 py-2 text-center font-semibold" title="Pontos na classificação">Pts</th>
+                        <th className="px-3 py-2 text-center font-semibold" title="Vitórias">V</th>
+                        <th className="px-3 py-2 text-center font-semibold" title="Derrotas">D</th>
+                        <th className="px-3 py-2 text-center font-semibold" title="Jogos">J</th>
+                        {!isBT && (
+                          <>
+                            <th className="px-3 py-2 text-center font-semibold" title={svTitle}>{svLabel}</th>
+                            <th className="px-3 py-2 text-center font-semibold" title={ssTitle}>{ssLabel}</th>
+                          </>
+                        )}
+                        <th className="px-3 py-2 text-center font-semibold" title={ppTitle}>{ppLabel}</th>
+                        <th className="px-3 py-2 text-center font-semibold" title={spTitle}>{spLabel}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ranking.map((r, i) => (
+                        <tr key={r.team.id} className="border-t border-sand-100 hover:bg-sand-50 transition-colors">
+                          <td className="px-3 py-2.5 font-bold text-primary-700">{i + 1}</td>
+                          <td className="px-3 py-2.5 font-medium">{r.team.name}</td>
+                          <td className="px-3 py-2.5 text-center font-bold text-primary-700">{r.points}</td>
+                          <td className="px-3 py-2.5 text-center text-green-700 font-medium">{r.wins}</td>
+                          <td className="px-3 py-2.5 text-center text-red-600 font-medium">{r.losses}</td>
+                          <td className="px-3 py-2.5 text-center text-gray-600">{r.matchesPlayed}</td>
+                          {!isBT && (
+                            <>
+                              <td className="px-3 py-2.5 text-center text-gray-600">{r.setsWon}</td>
+                              <td className={`px-3 py-2.5 text-center font-medium ${r.setsBalance > 0 ? 'text-green-700' : r.setsBalance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                                {r.setsBalance > 0 ? '+' : ''}{r.setsBalance}
+                              </td>
+                            </>
+                          )}
+                          <td className="px-3 py-2.5 text-center text-gray-600">{r.pointsFor}</td>
+                          <td className={`px-3 py-2.5 text-center font-medium ${r.pointsBalance > 0 ? 'text-green-700' : r.pointsBalance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                            {r.pointsBalance > 0 ? '+' : ''}{r.pointsBalance}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                );
+              })()}
             </div>
           )}
         </div>
