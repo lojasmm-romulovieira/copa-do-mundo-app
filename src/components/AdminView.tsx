@@ -78,6 +78,18 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
       return;
     }
 
+    const duplicate = matches.some(
+      (m) =>
+        m.sport === sport &&
+        m.category === category &&
+        ((m.team_a_id === teamA && m.team_b_id === teamB) ||
+          (m.team_a_id === teamB && m.team_b_id === teamA)),
+    );
+    if (duplicate) {
+      setFormError('Estas duas seleções já se enfrentaram nesta categoria. Cada dupla só pode jogar uma vez por categoria.');
+      return;
+    }
+
     const validation = validateMatch(sport, sets);
     if (!validation.valid || !validation.result) {
       setFormError(validation.error ?? 'Placar inválido.');
@@ -161,6 +173,19 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
 
     if (!editTeamA || !editTeamB || editTeamA === editTeamB) {
       setEditError('Selecione duas seleções diferentes.');
+      return;
+    }
+
+    const duplicateEdit = matches.some(
+      (m) =>
+        m.id !== editingMatch.id &&
+        m.sport === editSport &&
+        m.category === editCategory &&
+        ((m.team_a_id === editTeamA && m.team_b_id === editTeamB) ||
+          (m.team_a_id === editTeamB && m.team_b_id === editTeamA)),
+    );
+    if (duplicateEdit) {
+      setEditError('Estas duas seleções já se enfrentaram nesta categoria. Cada dupla só pode jogar uma vez por categoria.');
       return;
     }
 
