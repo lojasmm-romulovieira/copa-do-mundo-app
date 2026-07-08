@@ -280,13 +280,13 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
   const sportHint = currentRules
     ? currentRules.isBeachTennis
       ? `Game único até ${currentRules.pointsPerSet} games (diff ${currentRules.minDifference}). Em ${currentRules.tieBreakAt}x${currentRules.tieBreakAt} aparece o campo de tie-break (mín. ${currentRules.tieBreakPoints} com diff ${currentRules.tieBreakMinDiff}). Vitória no tie-break = 2 pts; derrota = 1 pt.`
-      : `Melhor de 3 sets até ${currentRules.pointsPerSet} pontos. Vence quem ganhar 2 sets.`
+      : `Melhor de 3 sets. Sets 1 e 2 até ${currentRules.pointsPerSet} pontos · 3º set até ${currentRules.thirdSetPoints} pontos. Vence quem ganhar 2 sets.`
     : '';
 
   const editHint = editRules
     ? editRules.isBeachTennis
       ? `Game único até ${editRules.pointsPerSet} games (diff ${editRules.minDifference}). Em ${editRules.tieBreakAt}x${editRules.tieBreakAt} aparece o campo de tie-break (mín. ${editRules.tieBreakPoints} com diff ${editRules.tieBreakMinDiff}). Vitória no tie-break = 2 pts; derrota = 1 pt.`
-      : `Melhor de 3 sets até ${editRules.pointsPerSet} pontos. Vence quem ganhar 2 sets.`
+      : `Melhor de 3 sets. Sets 1 e 2 até ${editRules.pointsPerSet} pontos · 3º set até ${editRules.thirdSetPoints} pontos. Vence quem ganhar 2 sets.`
     : '';
 
   return (

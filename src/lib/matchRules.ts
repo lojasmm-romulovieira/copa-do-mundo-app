@@ -17,6 +17,7 @@ export type MatchResult = {
 
 export type SportRules = {
   pointsPerSet: number;
+  thirdSetPoints: number; // points limit for 3rd set (tie-break set)
   bestOf: number;
   setsToWin: number;
   minDifference: number;
@@ -30,6 +31,7 @@ export type SportRules = {
 export const SPORT_RULES: Record<SportKey, SportRules> = {
   Futevôlei: {
     pointsPerSet: 18,
+    thirdSetPoints: 15,
     bestOf: 3,
     setsToWin: 2,
     minDifference: 1,
@@ -41,6 +43,7 @@ export const SPORT_RULES: Record<SportKey, SportRules> = {
   },
   Vôlei: {
     pointsPerSet: 21,
+    thirdSetPoints: 15,
     bestOf: 3,
     setsToWin: 2,
     minDifference: 1,
@@ -52,6 +55,7 @@ export const SPORT_RULES: Record<SportKey, SportRules> = {
   },
   'Beach Tennis': {
     pointsPerSet: 6,
+    thirdSetPoints: 6,
     bestOf: 2, // game + optional tie-break
     setsToWin: 1,
     minDifference: 2,
@@ -86,11 +90,12 @@ export function isTieBreakSetComplete(rules: SportRules, a: number, b: number): 
   return (a >= rules.tieBreakPoints || b >= rules.tieBreakPoints) && diff >= rules.tieBreakMinDiff;
 }
 
-export function isSetComplete(rules: SportRules, a: number, b: number): boolean {
+export function isSetComplete(rules: SportRules, a: number, b: number, setIndex = 0): boolean {
   if (rules.isBeachTennis) return isGameSetComplete(rules, a, b);
   if (a < 0 || b < 0) return false;
+  const limit = setIndex >= 2 ? rules.thirdSetPoints : rules.pointsPerSet;
   const diff = Math.abs(a - b);
-  return (a >= rules.pointsPerSet || b >= rules.pointsPerSet) && diff >= rules.minDifference;
+  return (a >= limit || b >= limit) && diff >= rules.minDifference;
 }
 
 export function beachTennisWentToTieBreak(sets: SetScore[]): boolean {
@@ -180,10 +185,11 @@ export function validateMatch(sport: string, sets: SetScore[]): ValidationResult
 
   for (let i = 0; i < filled.length; i++) {
     const s = filled[i];
-    if (!isSetComplete(rules, s.team_a, s.team_b)) {
+    if (!isSetComplete(rules, s.team_a, s.team_b, i)) {
+      const limit = i >= 2 ? rules.thirdSetPoints : rules.pointsPerSet;
       return {
         valid: false,
-        error: `Set ${i + 1} inválido. Termina em ${rules.pointsPerSet} pontos com diferença mínima de ${rules.minDifference}.`,
+        error: `Set ${i + 1} inválido. Termina em ${limit} pontos com diferença mínima de ${rules.minDifference}.`,
       };
     }
     if (s.team_a > s.team_b) setsWonA++;
