@@ -18,13 +18,13 @@ export default function LoginView({ onLogin, onBack }: LoginViewProps) {
     setError('');
     setLoading(true);
 
-    if (email === 'admin' && password === 'admin123') {
+    if (email === 'admin' && password === '@Orla44') {
       onLogin();
       setLoading(false);
       return;
     }
 
-    setError('Credenciais inválidas. Use admin / admin123');
+    setError('Credenciais inválidas.');
     setLoading(false);
   }
 
