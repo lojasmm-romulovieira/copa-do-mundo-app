@@ -2,10 +2,69 @@ import { useState } from 'react';
 import { Trophy, ListFilter as Filter, Shield, ChevronDown, ChevronUp, Target, Award, Activity, Layers } from 'lucide-react';
 import { useRealtimeData } from '../hooks/useRealtime';
 import { computeRanking, computeTotals } from '../lib/ranking';
+import type { RankingEntry } from '../lib/ranking';
 import { SPORTS, getCategories } from '../config';
 
 interface PublicViewProps {
   onAdminClick: () => void;
+}
+
+function RankingTable({ ranking, sport, category }: { ranking: RankingEntry[]; sport: string; category?: string }) {
+  const isBT = sport === 'Beach Tennis';
+
+  if (ranking.length === 0) {
+    return <div className="px-4 py-6 text-center text-sm text-gray-500">Nenhum resultado disponível.</div>;
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead className="bg-sand-100 text-gray-600">
+          <tr>
+            <th className="px-3 py-2 text-left font-semibold w-8">#</th>
+            <th className="px-3 py-2 text-left font-semibold">Seleção</th>
+            {category && <th className="px-3 py-2 text-left font-semibold text-xs text-gray-500">Cat.</th>}
+            <th className="px-3 py-2 text-center font-semibold" title="Pontos na classificação">Pts</th>
+            <th className="px-3 py-2 text-center font-semibold" title="Vitórias">V</th>
+            <th className="px-3 py-2 text-center font-semibold" title="Derrotas">D</th>
+            <th className="px-3 py-2 text-center font-semibold" title="Jogos">J</th>
+            {!isBT && (
+              <>
+                <th className="px-3 py-2 text-center font-semibold" title="Sets Vencidos">SV</th>
+                <th className="px-3 py-2 text-center font-semibold" title="Saldo de Sets">SS</th>
+              </>
+            )}
+            <th className="px-3 py-2 text-center font-semibold" title={isBT ? 'Games Pró' : 'Pontos Pró'}>{isBT ? 'GP' : 'PP'}</th>
+            <th className="px-3 py-2 text-center font-semibold" title={isBT ? 'Saldo de Pontos (game + TI)' : 'Saldo de Pontos'}>SP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ranking.map((r, i) => (
+            <tr key={r.team.id} className="border-t border-sand-100 hover:bg-sand-50 transition-colors">
+              <td className="px-3 py-2.5 font-bold text-primary-700">{i + 1}</td>
+              <td className="px-3 py-2.5 font-medium">{r.team.name}</td>
+              <td className="px-3 py-2.5 text-center font-bold text-primary-700">{r.points}</td>
+              <td className="px-3 py-2.5 text-center text-green-700 font-medium">{r.wins}</td>
+              <td className="px-3 py-2.5 text-center text-red-600 font-medium">{r.losses}</td>
+              <td className="px-3 py-2.5 text-center text-gray-600">{r.matchesPlayed}</td>
+              {!isBT && (
+                <>
+                  <td className="px-3 py-2.5 text-center text-gray-600">{r.setsWon}</td>
+                  <td className={`px-3 py-2.5 text-center font-medium ${r.setsBalance > 0 ? 'text-green-700' : r.setsBalance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                    {r.setsBalance > 0 ? '+' : ''}{r.setsBalance}
+                  </td>
+                </>
+              )}
+              <td className="px-3 py-2.5 text-center text-gray-600">{r.pointsFor}</td>
+              <td className={`px-3 py-2.5 text-center font-medium ${r.pointsBalance > 0 ? 'text-green-700' : r.pointsBalance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                {r.pointsBalance > 0 ? '+' : ''}{r.pointsBalance}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export default function PublicView({ onAdminClick }: PublicViewProps) {
@@ -16,7 +75,6 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
 
   const availableCategories = selectedSport ? getCategories(selectedSport) : [];
 
-  const ranking = computeRanking(teams, matches, selectedSport || undefined, selectedCategory || undefined);
   const totals = computeTotals(matches, selectedSport || undefined, selectedCategory || undefined);
   const finishedMatches = matches.filter((m) => m.winner_id);
 
@@ -33,6 +91,8 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
       </div>
     );
   }
+
+  const sportsToShow = selectedSport ? [selectedSport] : SPORTS;
 
   return (
     <div className="min-h-screen bg-sand-50">
@@ -137,80 +197,22 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
           )}
         </div>
 
-        {/* Ranking */}
-        <div className="bg-white rounded-xl shadow-sm border border-sand-200 overflow-hidden">
-          <div className="px-4 py-3 border-b border-sand-200">
-            <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-yellow-500" />
-              Classificação Geral
-              {selectedSport && <span className="text-sm font-normal text-gray-500">· {selectedSport}</span>}
-              {selectedCategory && <span className="text-sm font-normal text-gray-500">· {selectedCategory}</span>}
-            </h2>
-          </div>
-          {ranking.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-gray-500">Nenhum resultado disponível para os filtros selecionados.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              {(() => {
-                const isBT = selectedSport === 'Beach Tennis';
-                const svLabel = isBT ? 'GV' : 'SV';
-                const svTitle = isBT ? 'Games Vencidos' : 'Sets Vencidos';
-                const ssLabel = isBT ? 'SG' : 'SS';
-                const ssTitle = isBT ? 'Saldo de Games' : 'Saldo de Sets';
-                const ppLabel = isBT ? 'GP' : 'PP';
-                const ppTitle = isBT ? 'Games Pró' : 'Pontos Pró';
-                const spLabel = 'SP';
-                const spTitle = isBT ? 'Saldo de Pontos (game + TI)' : 'Saldo de Pontos';
-                return (
-                  <table className="w-full text-sm">
-                    <thead className="bg-sand-100 text-gray-600">
-                      <tr>
-                        <th className="px-3 py-2 text-left font-semibold w-12">#</th>
-                        <th className="px-3 py-2 text-left font-semibold">Seleção</th>
-                        <th className="px-3 py-2 text-center font-semibold" title="Pontos na classificação">Pts</th>
-                        <th className="px-3 py-2 text-center font-semibold" title="Vitórias">V</th>
-                        <th className="px-3 py-2 text-center font-semibold" title="Derrotas">D</th>
-                        <th className="px-3 py-2 text-center font-semibold" title="Jogos">J</th>
-                        {!isBT && (
-                          <>
-                            <th className="px-3 py-2 text-center font-semibold" title={svTitle}>{svLabel}</th>
-                            <th className="px-3 py-2 text-center font-semibold" title={ssTitle}>{ssLabel}</th>
-                          </>
-                        )}
-                        <th className="px-3 py-2 text-center font-semibold" title={ppTitle}>{ppLabel}</th>
-                        <th className="px-3 py-2 text-center font-semibold" title={spTitle}>{spLabel}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ranking.map((r, i) => (
-                        <tr key={r.team.id} className="border-t border-sand-100 hover:bg-sand-50 transition-colors">
-                          <td className="px-3 py-2.5 font-bold text-primary-700">{i + 1}</td>
-                          <td className="px-3 py-2.5 font-medium">{r.team.name}</td>
-                          <td className="px-3 py-2.5 text-center font-bold text-primary-700">{r.points}</td>
-                          <td className="px-3 py-2.5 text-center text-green-700 font-medium">{r.wins}</td>
-                          <td className="px-3 py-2.5 text-center text-red-600 font-medium">{r.losses}</td>
-                          <td className="px-3 py-2.5 text-center text-gray-600">{r.matchesPlayed}</td>
-                          {!isBT && (
-                            <>
-                              <td className="px-3 py-2.5 text-center text-gray-600">{r.setsWon}</td>
-                              <td className={`px-3 py-2.5 text-center font-medium ${r.setsBalance > 0 ? 'text-green-700' : r.setsBalance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                                {r.setsBalance > 0 ? '+' : ''}{r.setsBalance}
-                              </td>
-                            </>
-                          )}
-                          <td className="px-3 py-2.5 text-center text-gray-600">{r.pointsFor}</td>
-                          <td className={`px-3 py-2.5 text-center font-medium ${r.pointsBalance > 0 ? 'text-green-700' : r.pointsBalance < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                            {r.pointsBalance > 0 ? '+' : ''}{r.pointsBalance}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                );
-              })()}
+        {/* Rankings — one section per sport */}
+        {sportsToShow.map((sport) => {
+          const sportRanking = computeRanking(teams, matches, sport, selectedCategory || undefined);
+          return (
+            <div key={sport} className="bg-white rounded-xl shadow-sm border border-sand-200 overflow-hidden">
+              <div className="px-4 py-3 border-b border-sand-200">
+                <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-yellow-500" />
+                  Classificação — {sport}
+                  {selectedCategory && <span className="text-sm font-normal text-gray-500">· {selectedCategory}</span>}
+                </h2>
+              </div>
+              <RankingTable ranking={sportRanking} sport={sport} category={selectedCategory || undefined} />
             </div>
-          )}
-        </div>
+          );
+        })}
 
         {/* Results */}
         <div className="bg-white rounded-xl shadow-sm border border-sand-200 overflow-hidden">
@@ -258,11 +260,12 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="text-xs text-gray-500">{m.is_tie_break ? 'Tie-Break' : 'Normal'}</div>
                       <div className="text-sm font-bold text-primary-700">
                         {m.team_a_points} - {m.team_b_points} pts
                       </div>
-                      <div className="text-xs text-gray-500">Sets {m.team_a_sets_won}x{m.team_b_sets_won}</div>
+                      {!isBeachTennis && (
+                        <div className="text-xs text-gray-500">Sets {m.team_a_sets_won}x{m.team_b_sets_won}</div>
+                      )}
                     </div>
                   </div>
                 );
