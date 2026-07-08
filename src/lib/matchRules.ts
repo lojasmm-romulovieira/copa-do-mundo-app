@@ -93,14 +93,9 @@ export function isTieBreakSetComplete(rules: SportRules, a: number, b: number): 
 export function isSetComplete(rules: SportRules, a: number, b: number, setIndex = 0): boolean {
   if (rules.isBeachTennis) return isGameSetComplete(rules, a, b);
   if (a < 0 || b < 0) return false;
-  if (setIndex >= 2) {
-    // 3rd set must end exactly at thirdSetPoints
-    const limit = rules.thirdSetPoints;
-    const diff = Math.abs(a - b);
-    return (a === limit || b === limit) && diff >= rules.minDifference;
-  }
+  const limit = setIndex >= 2 ? rules.thirdSetPoints : rules.pointsPerSet;
   const diff = Math.abs(a - b);
-  return (a >= rules.pointsPerSet || b >= rules.pointsPerSet) && diff >= rules.minDifference;
+  return (a === limit || b === limit) && diff >= rules.minDifference;
 }
 
 export function beachTennisWentToTieBreak(sets: SetScore[]): boolean {
@@ -192,10 +187,10 @@ export function validateMatch(sport: string, sets: SetScore[]): ValidationResult
     const s = filled[i];
     if (!isSetComplete(rules, s.team_a, s.team_b, i)) {
       const limit = i >= 2 ? rules.thirdSetPoints : rules.pointsPerSet;
-      const msg = i >= 2
-        ? `3º set inválido. Um dos times deve ter exatamente ${limit} pontos com diferença mínima de ${rules.minDifference}.`
-        : `Set ${i + 1} inválido. Termina em ${limit} pontos com diferença mínima de ${rules.minDifference}.`;
-      return { valid: false, error: msg };
+      return {
+        valid: false,
+        error: `Set ${i + 1} inválido. Um dos times deve ter exatamente ${limit} pontos com diferença mínima de ${rules.minDifference}.`,
+      };
     }
     if (s.team_a > s.team_b) setsWonA++;
     else setsWonB++;
