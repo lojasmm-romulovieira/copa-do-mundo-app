@@ -201,11 +201,17 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
           ) : (
             <div className="divide-y divide-sand-100">
               {filteredMatches.map((m) => {
-                const setScores = (m.match_sets ?? [])
+                const sortedSets = (m.match_sets ?? [])
                   .slice()
-                  .sort((a, b) => a.set_number - b.set_number)
-                  .map((s) => `${s.team_a_score}x${s.team_b_score}`)
-                  .join(' · ');
+                  .sort((a, b) => a.set_number - b.set_number);
+                const isBeachTennis = m.sport === 'Beach Tennis';
+                const scoreLabel = isBeachTennis
+                  ? sortedSets.length === 2
+                    ? `Game: ${sortedSets[0].team_a_score}x${sortedSets[0].team_b_score} · TI: ${sortedSets[1].team_a_score}x${sortedSets[1].team_b_score}`
+                    : sortedSets.length === 1
+                      ? `Game: ${sortedSets[0].team_a_score}x${sortedSets[0].team_b_score}`
+                      : ''
+                  : sortedSets.map((s) => `${s.team_a_score}x${s.team_b_score}`).join(' · ');
                 return (
                   <div key={m.id} className="px-4 py-3 flex items-center justify-between hover:bg-sand-50 transition-colors">
                     <div className="flex-1 min-w-0">
@@ -223,8 +229,11 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
                           {m.team_b?.name}
                         </span>
                       </div>
-                      {setScores && (
-                        <div className="text-xs text-gray-500 mt-0.5">Sets: {setScores}</div>
+                      {scoreLabel && (
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {scoreLabel}
+                          {!isBeachTennis && ` · Sets ${m.team_a_sets_won}x${m.team_b_sets_won}`}
+                        </div>
                       )}
                     </div>
                     <div className="text-right">
