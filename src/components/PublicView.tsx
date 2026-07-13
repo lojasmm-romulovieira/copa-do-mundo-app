@@ -115,6 +115,7 @@ function AllSportsTable({
             <th className="px-3 py-2 text-left font-semibold" rowSpan={2}>Seleção</th>
             <th className="px-3 py-2 text-center font-semibold" rowSpan={2} title="Pontos totais">Pts</th>
             <th className="px-3 py-2 text-center font-semibold" rowSpan={2} title="Total de vitórias (critério de desempate)">V</th>
+            <th className="px-3 py-2 text-center font-semibold" rowSpan={2} title="Total de derrotas">D</th>
             <th className="px-3 py-2 text-center font-semibold border-l border-sand-300 bg-blue-50 text-blue-700" colSpan={6}>Vôlei de Areia</th>
             <th className="px-3 py-2 text-center font-semibold border-l border-sand-300 bg-green-50 text-green-700" colSpan={6}>Futevôlei</th>
             <th className="px-3 py-2 text-center font-semibold border-l border-sand-300 bg-amber-50 text-amber-700" colSpan={5}>Beach Tennis</th>
@@ -153,6 +154,9 @@ function AllSportsTable({
               <td className="px-3 py-2.5 text-center font-bold text-primary-700">{r.totalPts}</td>
               <td className="px-3 py-2.5 text-center font-bold text-green-700">
                 {z(r.vb?.wins) + z(r.fv?.wins) + z(r.bt?.wins)}
+              </td>
+              <td className="px-3 py-2.5 text-center font-bold text-red-600">
+                {z(r.vb?.losses) + z(r.fv?.losses) + z(r.bt?.losses)}
               </td>
               {/* Vôlei */}
               <td className="px-2 py-2.5 text-center border-l border-sand-200 text-blue-700 font-medium">{z(r.vb?.points)}</td>
