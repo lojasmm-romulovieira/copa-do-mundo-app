@@ -21,6 +21,7 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
   const [activeTab, setActiveTab] = useState<'teams' | 'matches' | 'control'>('matches');
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamCountry, setNewTeamCountry] = useState('');
+  const [countryDraft, setCountryDraft] = useState<Record<string, string>>({});
 
   const [sport, setSport] = useState<string>(SPORTS[0]);
   const [category, setCategory] = useState<string>(getCategories(SPORTS[0])[0] ?? '');
@@ -60,6 +61,11 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
     if (!confirm('Tem certeza que deseja remover esta seleção?')) return;
     const { error } = await supabase.from('teams').delete().eq('id', id);
     if (error) alert('Erro ao remover: ' + error.message);
+  }
+
+  async function saveTeamCountry(id: string) {
+    const country = (countryDraft[id] ?? '').trim() || null;
+    await supabase.from('teams').update({ country }).eq('id', id);
   }
 
   function updateSet(index: number, side: 'team_a' | 'team_b', value: string) {
@@ -658,20 +664,29 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
               </div>
             </div>
             <div className="divide-y divide-sand-100">
-              {teams.map((t) => (
-                <div key={t.id} className="flex items-center justify-between py-2.5">
-                  <div>
-                    <span className="text-sm font-medium">{t.name}</span>
-                    {t.country && <span className="ml-2 text-xs text-gray-500">{t.country}</span>}
+              {teams.map((t) => {
+                const draft = countryDraft[t.id] ?? t.country ?? '';
+                return (
+                  <div key={t.id} className="flex items-center gap-2 py-2.5">
+                    <span className="text-sm font-medium flex-1 min-w-0 truncate">{t.name}</span>
+                    <input
+                      type="text"
+                      value={draft}
+                      onChange={(e) => setCountryDraft((prev) => ({ ...prev, [t.id]: e.target.value }))}
+                      onBlur={() => saveTeamCountry(t.id)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.currentTarget as HTMLInputElement).blur()}
+                      placeholder="País"
+                      className="w-32 rounded-lg border border-gray-300 px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                    <button
+                      onClick={() => deleteTeam(t.id)}
+                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => deleteTeam(t.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
