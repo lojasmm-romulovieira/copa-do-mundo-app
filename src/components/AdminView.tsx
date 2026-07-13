@@ -62,10 +62,6 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
     if (error) alert('Erro ao remover: ' + error.message);
   }
 
-  async function updateTeamCountry(id: string, country: string) {
-    await supabase.from('teams').update({ country: country.trim() || null }).eq('id', id);
-  }
-
   function updateSet(index: number, side: 'team_a' | 'team_b', value: string) {
     const n = Math.max(0, Math.min(99, parseInt(value, 10) || 0));
     setSets((prev) => prev.map((s, i) => (i === index ? { ...s, [side]: n } : s)));
@@ -663,18 +659,14 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
             </div>
             <div className="divide-y divide-sand-100">
               {teams.map((t) => (
-                <div key={t.id} className="flex items-center gap-2 py-2.5">
-                  <span className="text-sm font-medium flex-1 min-w-0 truncate">{t.name}</span>
-                  <input
-                    type="text"
-                    defaultValue={t.country ?? ''}
-                    onBlur={(e) => updateTeamCountry(t.id, e.target.value)}
-                    placeholder="País"
-                    className="w-32 rounded-lg border border-gray-300 px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-primary-500"
-                  />
+                <div key={t.id} className="flex items-center justify-between py-2.5">
+                  <div>
+                    <span className="text-sm font-medium">{t.name}</span>
+                    {t.country && <span className="ml-2 text-xs text-gray-500">{t.country}</span>}
+                  </div>
                   <button
                     onClick={() => deleteTeam(t.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
