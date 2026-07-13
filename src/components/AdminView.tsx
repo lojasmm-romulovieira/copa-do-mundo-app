@@ -406,17 +406,17 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
                     {/* Beach Tennis: game row */}
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-gray-500 w-16">Game</span>
-                      <input type="number" min={0} max={99} value={sets[0].team_a} onChange={(e) => updateSet(0, 'team_a', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                      <input type="number" min={0} max={99} value={sets[0].team_a} onFocus={(e) => e.target.select()} onChange={(e) => updateSet(0, 'team_a', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
                       <span className="text-gray-400 text-xs">x</span>
-                      <input type="number" min={0} max={99} value={sets[0].team_b} onChange={(e) => updateSet(0, 'team_b', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                      <input type="number" min={0} max={99} value={sets[0].team_b} onFocus={(e) => e.target.select()} onChange={(e) => updateSet(0, 'team_b', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
                     </div>
                     {/* Tie-break row: only visible when game is 6x6 */}
                     {sets[0].team_a === 6 && sets[0].team_b === 6 && (
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-medium text-amber-600 w-16">Tie-Break</span>
-                        <input type="number" min={0} max={99} value={sets[1].team_a} onChange={(e) => updateSet(1, 'team_a', e.target.value)} className="w-20 rounded-lg border border-amber-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-amber-400" />
+                        <input type="number" min={0} max={99} value={sets[1].team_a} onFocus={(e) => e.target.select()} onChange={(e) => updateSet(1, 'team_a', e.target.value)} className="w-20 rounded-lg border border-amber-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-amber-400" />
                         <span className="text-gray-400 text-xs">x</span>
-                        <input type="number" min={0} max={99} value={sets[1].team_b} onChange={(e) => updateSet(1, 'team_b', e.target.value)} className="w-20 rounded-lg border border-amber-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-amber-400" />
+                        <input type="number" min={0} max={99} value={sets[1].team_b} onFocus={(e) => e.target.select()} onChange={(e) => updateSet(1, 'team_b', e.target.value)} className="w-20 rounded-lg border border-amber-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-amber-400" />
                       </div>
                     )}
                   </>
@@ -424,9 +424,9 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
                   sets.slice(0, currentRules?.bestOf ?? MAX_SETS).map((s, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <span className="text-xs font-medium text-gray-500 w-16">Set {i + 1}</span>
-                      <input type="number" min={0} max={99} value={s.team_a} onChange={(e) => updateSet(i, 'team_a', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                      <input type="number" min={0} max={99} value={s.team_a} onFocus={(e) => e.target.select()} onChange={(e) => updateSet(i, 'team_a', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
                       <span className="text-gray-400 text-xs">x</span>
-                      <input type="number" min={0} max={99} value={s.team_b} onChange={(e) => updateSet(i, 'team_b', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                      <input type="number" min={0} max={99} value={s.team_b} onFocus={(e) => e.target.select()} onChange={(e) => updateSet(i, 'team_b', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
                     </div>
                   ))
                 )}
@@ -572,16 +572,16 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
                       <>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-medium text-gray-500 w-16">Game</span>
-                          <input type="number" min={0} max={99} value={editSets[0].team_a} onChange={(e) => updateEditSet(0, 'team_a', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                          <input type="number" min={0} max={99} value={editSets[0].team_a} onFocus={(e) => e.target.select()} onChange={(e) => updateEditSet(0, 'team_a', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
                           <span className="text-gray-400 text-xs">x</span>
-                          <input type="number" min={0} max={99} value={editSets[0].team_b} onChange={(e) => updateEditSet(0, 'team_b', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                          <input type="number" min={0} max={99} value={editSets[0].team_b} onFocus={(e) => e.target.select()} onChange={(e) => updateEditSet(0, 'team_b', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
                         </div>
                         {editSets[0].team_a === 6 && editSets[0].team_b === 6 && (
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-medium text-amber-600 w-16">Tie-Break</span>
-                            <input type="number" min={0} max={99} value={editSets[1].team_a} onChange={(e) => updateEditSet(1, 'team_a', e.target.value)} className="w-20 rounded-lg border border-amber-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-amber-400" />
+                            <input type="number" min={0} max={99} value={editSets[1].team_a} onFocus={(e) => e.target.select()} onChange={(e) => updateEditSet(1, 'team_a', e.target.value)} className="w-20 rounded-lg border border-amber-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-amber-400" />
                             <span className="text-gray-400 text-xs">x</span>
-                            <input type="number" min={0} max={99} value={editSets[1].team_b} onChange={(e) => updateEditSet(1, 'team_b', e.target.value)} className="w-20 rounded-lg border border-amber-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-amber-400" />
+                            <input type="number" min={0} max={99} value={editSets[1].team_b} onFocus={(e) => e.target.select()} onChange={(e) => updateEditSet(1, 'team_b', e.target.value)} className="w-20 rounded-lg border border-amber-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-amber-400" />
                           </div>
                         )}
                       </>
@@ -589,9 +589,9 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
                       editSets.slice(0, editRules?.bestOf ?? MAX_SETS).map((s, i) => (
                         <div key={i} className="flex items-center gap-2">
                           <span className="text-xs font-medium text-gray-500 w-16">Set {i + 1}</span>
-                          <input type="number" min={0} max={99} value={s.team_a} onChange={(e) => updateEditSet(i, 'team_a', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                          <input type="number" min={0} max={99} value={s.team_a} onFocus={(e) => e.target.select()} onChange={(e) => updateEditSet(i, 'team_a', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
                           <span className="text-gray-400 text-xs">x</span>
-                          <input type="number" min={0} max={99} value={s.team_b} onChange={(e) => updateEditSet(i, 'team_b', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
+                          <input type="number" min={0} max={99} value={s.team_b} onFocus={(e) => e.target.select()} onChange={(e) => updateEditSet(i, 'team_b', e.target.value)} className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-primary-500" />
                         </div>
                       ))
                     )}
