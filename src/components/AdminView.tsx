@@ -20,6 +20,7 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
   const { teams, matches, refresh } = useRealtimeData();
   const [activeTab, setActiveTab] = useState<'teams' | 'matches' | 'control'>('matches');
   const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamCountry, setNewTeamCountry] = useState('');
 
   const [sport, setSport] = useState<string>(SPORTS[0]);
   const [category, setCategory] = useState<string>(getCategories(SPORTS[0])[0] ?? '');
@@ -45,12 +46,13 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
 
   async function addTeam() {
     if (!newTeamName.trim()) return;
-    const { error } = await supabase.from('teams').insert({ name: newTeamName.trim() });
+    const { error } = await supabase.from('teams').insert({ name: newTeamName.trim(), country: newTeamCountry.trim() || null });
     if (error) {
       alert('Erro ao adicionar seleção: ' + error.message);
       return;
     }
     setNewTeamName('');
+    setNewTeamCountry('');
     refresh();
   }
 
@@ -628,28 +630,41 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
               <Users className="w-5 h-5 text-primary-600" />
               Gerenciar Seleções
             </h2>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newTeamName}
-                onChange={(e) => setNewTeamName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addTeam()}
-                placeholder="Nome da nova seleção"
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
-              />
-              <button
-                onClick={addTeam}
-                disabled={!newTeamName.trim()}
-                className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Adicionar
-              </button>
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newTeamName}
+                  onChange={(e) => setNewTeamName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addTeam()}
+                  placeholder="Nome da nova seleção"
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                />
+                <input
+                  type="text"
+                  value={newTeamCountry}
+                  onChange={(e) => setNewTeamCountry(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addTeam()}
+                  placeholder="País (ex: Brasil)"
+                  className="w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                />
+                <button
+                  onClick={addTeam}
+                  disabled={!newTeamName.trim()}
+                  className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Adicionar
+                </button>
+              </div>
             </div>
             <div className="divide-y divide-sand-100">
               {teams.map((t) => (
                 <div key={t.id} className="flex items-center justify-between py-2.5">
-                  <span className="text-sm font-medium">{t.name}</span>
+                  <div>
+                    <span className="text-sm font-medium">{t.name}</span>
+                    {t.country && <span className="ml-2 text-xs text-gray-500">{t.country}</span>}
+                  </div>
                   <button
                     onClick={() => deleteTeam(t.id)}
                     className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"

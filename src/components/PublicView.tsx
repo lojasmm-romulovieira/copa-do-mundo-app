@@ -47,7 +47,10 @@ function SingleSportTable({ ranking, sport }: { ranking: RankingEntry[]; sport: 
           {ranking.map((r, i) => (
             <tr key={r.team.id} className="border-t border-sand-100 hover:bg-sand-50 transition-colors">
               <td className="px-3 py-2.5 font-bold text-primary-700">{i + 1}</td>
-              <td className="px-3 py-2.5 font-medium">{r.team.name}</td>
+              <td className="px-3 py-2.5 font-medium">
+                {r.team.name}
+                {r.team.country && <span className="ml-1.5 text-xs text-gray-400 font-normal">{r.team.country}</span>}
+              </td>
               <td className="px-3 py-2.5 text-center font-bold text-primary-700">{r.points}</td>
               <td className="px-3 py-2.5 text-center text-green-700 font-medium">{r.wins}</td>
               <td className="px-3 py-2.5 text-center text-red-600 font-medium">{r.losses}</td>
@@ -83,6 +86,7 @@ function AllSportsTable({
     .map((id) => ({
       id,
       name: vb.get(id)?.team.name ?? fv.get(id)?.team.name ?? bt.get(id)?.team.name ?? id,
+      country: vb.get(id)?.team.country ?? fv.get(id)?.team.country ?? bt.get(id)?.team.country,
       totalPts: (vb.get(id)?.points ?? 0) + (fv.get(id)?.points ?? 0) + (bt.get(id)?.points ?? 0),
       vb: vb.get(id),
       fv: fv.get(id),
@@ -141,7 +145,10 @@ function AllSportsTable({
           {rows.map((r, i) => (
             <tr key={r.id} className="border-t border-sand-100 hover:bg-sand-50 transition-colors">
               <td className="px-3 py-2.5 font-bold text-primary-700">{i + 1}</td>
-              <td className="px-3 py-2.5 font-medium">{r.name}</td>
+              <td className="px-3 py-2.5 font-medium">
+                {r.name}
+                {r.country && <span className="ml-1.5 text-xs text-gray-400 font-normal">{r.country}</span>}
+              </td>
               <td className="px-3 py-2.5 text-center font-bold text-primary-700">{r.totalPts}</td>
               {/* Vôlei */}
               <td className="px-2 py-2.5 text-center border-l border-sand-200 text-blue-700 font-medium">{z(r.vb?.points)}</td>
@@ -175,28 +182,35 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
   const { teams, matches, loading } = useRealtimeData();
   const [selectedSport, setSelectedSport] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
 
   const availableCategories = selectedSport ? getCategories(selectedSport) : [];
+  const availableCountries = Array.from(new Set(teams.map((t) => t.country).filter(Boolean))) as string[];
   const totals = computeTotals(matches, selectedSport || undefined, selectedCategory || undefined);
 
   const finishedMatches = matches.filter((m) => m.winner_id);
   const filteredMatches = finishedMatches.filter((m) => {
     if (selectedSport && m.sport !== selectedSport) return false;
     if (selectedCategory && m.category !== selectedCategory) return false;
+    if (selectedCountry && m.team_a?.country !== selectedCountry && m.team_b?.country !== selectedCountry) return false;
     return true;
   });
 
-  const vbRanking = computeRanking(teams, matches, 'Vôlei de Areia', undefined);
-  const fvRanking = computeRanking(teams, matches, 'Futevôlei', undefined);
-  const btRanking = computeRanking(teams, matches, 'Beach Tennis', undefined);
+  const filteredTeams = selectedCountry ? teams.filter((t) => t.country === selectedCountry) : teams;
+  const filteredTeamIds = new Set(filteredTeams.map((t) => t.id));
+
+  const vbRanking = computeRanking(teams, matches, 'Vôlei de Areia', undefined).filter((r) => !selectedCountry || filteredTeamIds.has(r.team.id));
+  const fvRanking = computeRanking(teams, matches, 'Futevôlei', undefined).filter((r) => !selectedCountry || filteredTeamIds.has(r.team.id));
+  const btRanking = computeRanking(teams, matches, 'Beach Tennis', undefined).filter((r) => !selectedCountry || filteredTeamIds.has(r.team.id));
   const vbMap = new Map(vbRanking.map((r) => [r.team.id, r]));
   const fvMap = new Map(fvRanking.map((r) => [r.team.id, r]));
   const btMap = new Map(btRanking.map((r) => [r.team.id, r]));
-  const allTeamIds = teams.map((t) => t.id);
+  const allTeamIds = filteredTeams.map((t) => t.id);
 
   const filteredSportRanking = selectedSport
     ? computeRanking(teams, matches, selectedSport, selectedCategory || undefined)
+        .filter((r) => !selectedCountry || filteredTeamIds.has(r.team.id))
     : [];
 
   if (loading) {
@@ -275,7 +289,7 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
             {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
           {showFilters && (
-            <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Esporte</label>
                 <select
@@ -302,6 +316,19 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
                 >
                   <option value="">{selectedSport ? 'Todas' : 'Selecione um esporte primeiro'}</option>
                   {availableCategories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">País</label>
+                <select
+                  value={selectedCountry}
+                  onChange={(e) => setSelectedCountry(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                >
+                  <option value="">Todos</option>
+                  {availableCountries.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
@@ -358,11 +385,11 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <span className={`font-medium ${m.winner_id === m.team_a_id ? 'text-green-700' : 'text-gray-700'}`}>
-                          {m.team_a?.name}
+                          {m.team_a?.name}{m.team_a?.country ? ` (${m.team_a.country})` : ''}
                         </span>
                         <span className="text-gray-400">vs</span>
                         <span className={`font-medium ${m.winner_id === m.team_b_id ? 'text-green-700' : 'text-gray-700'}`}>
-                          {m.team_b?.name}
+                          {m.team_b?.name}{m.team_b?.country ? ` (${m.team_b.country})` : ''}
                         </span>
                       </div>
                       {scoreLabel && (

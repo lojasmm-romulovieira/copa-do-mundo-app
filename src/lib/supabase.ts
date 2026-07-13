@@ -8,6 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export type Team = {
   id: string;
   name: string;
+  country?: string | null;
   created_at: string;
 };
 
