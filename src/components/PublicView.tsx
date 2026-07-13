@@ -182,35 +182,33 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
   const { teams, matches, loading } = useRealtimeData();
   const [selectedSport, setSelectedSport] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedCountry, setSelectedCountry] = useState<string>('');
+  const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
 
   const availableCategories = selectedSport ? getCategories(selectedSport) : [];
-  const availableCountries = Array.from(new Set(teams.map((t) => t.country).filter(Boolean))) as string[];
   const totals = computeTotals(matches, selectedSport || undefined, selectedCategory || undefined);
 
   const finishedMatches = matches.filter((m) => m.winner_id);
   const filteredMatches = finishedMatches.filter((m) => {
     if (selectedSport && m.sport !== selectedSport) return false;
     if (selectedCategory && m.category !== selectedCategory) return false;
-    if (selectedCountry && m.team_a?.country !== selectedCountry && m.team_b?.country !== selectedCountry) return false;
+    if (selectedTeamId && m.team_a_id !== selectedTeamId && m.team_b_id !== selectedTeamId) return false;
     return true;
   });
 
-  const filteredTeams = selectedCountry ? teams.filter((t) => t.country === selectedCountry) : teams;
-  const filteredTeamIds = new Set(filteredTeams.map((t) => t.id));
+  const filteredTeamIds = new Set(selectedTeamId ? [selectedTeamId] : teams.map((t) => t.id));
 
-  const vbRanking = computeRanking(teams, matches, 'Vôlei de Areia', undefined).filter((r) => !selectedCountry || filteredTeamIds.has(r.team.id));
-  const fvRanking = computeRanking(teams, matches, 'Futevôlei', undefined).filter((r) => !selectedCountry || filteredTeamIds.has(r.team.id));
-  const btRanking = computeRanking(teams, matches, 'Beach Tennis', undefined).filter((r) => !selectedCountry || filteredTeamIds.has(r.team.id));
+  const vbRanking = computeRanking(teams, matches, 'Vôlei de Areia', undefined).filter((r) => !selectedTeamId || filteredTeamIds.has(r.team.id));
+  const fvRanking = computeRanking(teams, matches, 'Futevôlei', undefined).filter((r) => !selectedTeamId || filteredTeamIds.has(r.team.id));
+  const btRanking = computeRanking(teams, matches, 'Beach Tennis', undefined).filter((r) => !selectedTeamId || filteredTeamIds.has(r.team.id));
   const vbMap = new Map(vbRanking.map((r) => [r.team.id, r]));
   const fvMap = new Map(fvRanking.map((r) => [r.team.id, r]));
   const btMap = new Map(btRanking.map((r) => [r.team.id, r]));
-  const allTeamIds = filteredTeams.map((t) => t.id);
+  const allTeamIds = Array.from(filteredTeamIds);
 
   const filteredSportRanking = selectedSport
     ? computeRanking(teams, matches, selectedSport, selectedCategory || undefined)
-        .filter((r) => !selectedCountry || filteredTeamIds.has(r.team.id))
+        .filter((r) => !selectedTeamId || filteredTeamIds.has(r.team.id))
     : [];
 
   if (loading) {
@@ -321,15 +319,15 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">País</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Seleção</label>
                 <select
-                  value={selectedCountry}
-                  onChange={(e) => setSelectedCountry(e.target.value)}
+                  value={selectedTeamId}
+                  onChange={(e) => setSelectedTeamId(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
                 >
-                  <option value="">Todos</option>
-                  {availableCountries.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                  <option value="">Todas</option>
+                  {[...teams].sort((a, b) => a.name.localeCompare(b.name)).map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </select>
               </div>
