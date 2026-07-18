@@ -16,6 +16,20 @@ function emptySets(): SetScore[] {
   return Array.from({ length: MAX_SETS }, () => ({ team_a: 0, team_b: 0 }));
 }
 
+function todayISO(): string {
+  const d = new Date();
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off * 60_000);
+  return local.toISOString().slice(0, 10);
+}
+
+function formatDateBR(iso: string | null): string {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+
 export default function AdminView({ onBack, onLogout }: AdminViewProps) {
   const { teams, matches, refresh } = useRealtimeData();
   const [activeTab, setActiveTab] = useState<'teams' | 'matches' | 'control'>('matches');
@@ -26,6 +40,7 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
   const [teamA, setTeamA] = useState('');
   const [teamB, setTeamB] = useState('');
   const [sets, setSets] = useState<SetScore[]>(emptySets());
+  const [matchDate, setMatchDate] = useState<string>(todayISO());
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -35,6 +50,7 @@ export default function AdminView({ onBack, onLogout }: AdminViewProps) {
   const [editTeamA, setEditTeamA] = useState('');
   const [editTeamB, setEditTeamB] = useState('');
   const [editSets, setEditSets] = useState<SetScore[]>(emptySets());
+  const [editMatchDate, setEditMatchDate] = useState<string>(todayISO());
   const [editError, setEditError] = useState('');
   const [editSaving, setEditSaving] = useState(false);
 
@@ -108,6 +124,7 @@ function updateSet(index: number, side: 'team_a' | 'team_b', value: string) {
       team_b_id: teamB,
       winner_id: winnerId,
       is_tie_break: result.isTieBreak,
+      match_date: matchDate || null,
       team_a_points: aRankPts,
       team_b_points: bRankPts,
       team_a_sets_won: result.setsWonA,
@@ -145,6 +162,7 @@ function updateSet(index: number, side: 'team_a' | 'team_b', value: string) {
     setTeamA('');
     setTeamB('');
     setSets(emptySets());
+    setMatchDate(todayISO());
     refresh();
   }
 
@@ -154,6 +172,7 @@ function updateSet(index: number, side: 'team_a' | 'team_b', value: string) {
     setEditCategory(m.category);
     setEditTeamA(m.team_a_id);
     setEditTeamB(m.team_b_id);
+    setEditMatchDate(m.match_date ?? todayISO());
     const loaded = (m.match_sets ?? [])
       .slice()
       .sort((a, b) => a.set_number - b.set_number)
@@ -207,6 +226,7 @@ function updateSet(index: number, side: 'team_a' | 'team_b', value: string) {
       team_b_id: editTeamB,
       winner_id: winnerId,
       is_tie_break: result.isTieBreak,
+      match_date: editMatchDate || null,
       team_a_points: aRankPts,
       team_b_points: bRankPts,
       team_a_sets_won: result.setsWonA,
@@ -387,6 +407,15 @@ function updateSet(index: number, side: 'team_a' | 'team_b', value: string) {
                     {availableTeamsForB.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Data da Partida</label>
+                  <input
+                    type="date"
+                    value={matchDate}
+                    onChange={(e) => setMatchDate(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
               </div>
 
               {sportHint && (
@@ -479,6 +508,7 @@ function updateSet(index: number, side: 'team_a' | 'team_b', value: string) {
                             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700">{m.sport}</span>
                             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-sand-200 text-sand-800">{m.category}</span>
                             {m.is_tie_break && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Tie-Break</span>}
+                            {m.match_date && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{formatDateBR(m.match_date)}</span>}
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <span className={`font-medium ${m.winner_id === m.team_a_id ? 'text-green-700' : 'text-gray-700'}`}>{m.team_a?.name}</span>
@@ -554,6 +584,15 @@ function updateSet(index: number, side: 'team_a' | 'team_b', value: string) {
                       <select value={editTeamB} onChange={(e) => setEditTeamB(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500">
                         {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                       </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Data da Partida</label>
+                      <input
+                        type="date"
+                        value={editMatchDate}
+                        onChange={(e) => setEditMatchDate(e.target.value)}
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                      />
                     </div>
                   </div>
 

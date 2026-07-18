@@ -37,6 +37,7 @@ export type Match = {
   team_b_points_for: number;
   team_a_points_against: number;
   team_b_points_against: number;
+  match_date: string | null;
   created_at: string;
   team_a?: Team;
   team_b?: Team;

@@ -17,6 +17,13 @@ function bal(n: number) {
   );
 }
 
+function formatDateBR(iso: string | null): string {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+
 function SingleSportTable({ ranking, sport }: { ranking: RankingEntry[]; sport: string }) {
   const isBT = sport === 'Beach Tennis';
   if (ranking.length === 0) {
@@ -388,6 +395,7 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
                         <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700">{m.sport}</span>
                         <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-sand-200 text-sand-800">{m.category}</span>
                         {m.is_tie_break && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Tie-Break</span>}
+                        {m.match_date && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{formatDateBR(m.match_date)}</span>}
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <span className={`font-medium ${m.winner_id === m.team_a_id ? 'text-green-700' : 'text-gray-700'}`}>
