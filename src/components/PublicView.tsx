@@ -198,12 +198,18 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
   const [selectedSport, setSelectedSport] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
 
   const availableCategories = selectedSport ? getCategories(selectedSport) : [];
-  const totals = computeTotals(matches, selectedSport || undefined, selectedCategory || undefined);
 
-  const finishedMatches = matches.filter((m) => m.winner_id);
+  const dateFilteredMatches = selectedDate
+    ? matches.filter((m) => m.match_date === selectedDate)
+    : matches;
+
+  const totals = computeTotals(dateFilteredMatches, selectedSport || undefined, selectedCategory || undefined);
+
+  const finishedMatches = dateFilteredMatches.filter((m) => m.winner_id);
   const filteredMatches = finishedMatches.filter((m) => {
     if (selectedSport && m.sport !== selectedSport) return false;
     if (selectedCategory && m.category !== selectedCategory) return false;
@@ -213,16 +219,16 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
 
   const filteredTeamIds = new Set(selectedTeamId ? [selectedTeamId] : teams.map((t) => t.id));
 
-  const vbRanking = computeRanking(teams, matches, 'Vôlei de Areia', undefined).filter((r) => !selectedTeamId || filteredTeamIds.has(r.team.id));
-  const fvRanking = computeRanking(teams, matches, 'Futevôlei', undefined).filter((r) => !selectedTeamId || filteredTeamIds.has(r.team.id));
-  const btRanking = computeRanking(teams, matches, 'Beach Tennis', undefined).filter((r) => !selectedTeamId || filteredTeamIds.has(r.team.id));
+  const vbRanking = computeRanking(teams, dateFilteredMatches, 'Vôlei de Areia', undefined).filter((r) => !selectedTeamId || filteredTeamIds.has(r.team.id));
+  const fvRanking = computeRanking(teams, dateFilteredMatches, 'Futevôlei', undefined).filter((r) => !selectedTeamId || filteredTeamIds.has(r.team.id));
+  const btRanking = computeRanking(teams, dateFilteredMatches, 'Beach Tennis', undefined).filter((r) => !selectedTeamId || filteredTeamIds.has(r.team.id));
   const vbMap = new Map(vbRanking.map((r) => [r.team.id, r]));
   const fvMap = new Map(fvRanking.map((r) => [r.team.id, r]));
   const btMap = new Map(btRanking.map((r) => [r.team.id, r]));
   const allTeamIds = Array.from(filteredTeamIds);
 
   const filteredSportRanking = selectedSport
-    ? computeRanking(teams, matches, selectedSport, selectedCategory || undefined)
+    ? computeRanking(teams, dateFilteredMatches, selectedSport, selectedCategory || undefined)
         .filter((r) => !selectedTeamId || filteredTeamIds.has(r.team.id))
     : [];
 
@@ -298,11 +304,16 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
             <span className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-primary-600" />
               Filtros
+              {selectedDate && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                  {formatDateBR(selectedDate)}
+                </span>
+              )}
             </span>
             {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
           {showFilters && (
-            <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Esporte</label>
                 <select
@@ -345,6 +356,24 @@ export default function PublicView({ onAdminClick }: PublicViewProps) {
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Data</label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={() => { setSelectedSport(''); setSelectedCategory(''); setSelectedTeamId(''); setSelectedDate(''); }}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 focus:ring-2 focus:ring-primary-500 outline-none"
+                >
+                  Limpar filtros
+                </button>
               </div>
             </div>
           )}
